@@ -1,0 +1,58 @@
+spring:
+  application:
+    name: epotrade
+  datasource:
+    url: jdbc:postgresql://localhost:5432/epotrade
+    username: ${DB_USERNAME:epotrade}
+    password: ${DB_PASSWORD:epotrade}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    consumer:
+      group-id: epotrade
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+jwt:
+  secret: ${JWT_SECRET:epotrade-default-secret-key-change-in-production-min-256-bits!!}
+  access-token-validity: 3600000
+  refresh-token-validity: 86400000
+
+trading:
+  engine:
+    interval: 5000
+  paper-mode: true
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+logging:
+  level:
+    com.epotrade: DEBUG
+    org.springframework.security: INFO

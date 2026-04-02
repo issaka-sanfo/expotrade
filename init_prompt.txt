@@ -1,0 +1,193 @@
+You are a senior software architect and quantitative developer.
+
+Design and implement a production-grade Automated Trading Bot platform integrating:
+
+* eToro API (or simulated wrapper if API is limited)
+* Interactive Brokers (IBKR API)
+
+## 🎯 Objectives
+
+Build a scalable, maintainable, and secure system that:
+
+* Executes automated trading strategies
+* Supports multiple brokers (eToro + IBKR abstraction)
+* Provides real-time monitoring dashboard
+* Ensures high reliability and fault tolerance
+
+---
+
+## 🏗️ Architecture Requirements
+
+### Backend (Java)
+
+Use:
+
+* Java 21+
+* Spring Boot
+* Spring WebFlux (for reactive streams)
+* Spring Security (JWT-based auth)
+* Hibernate/JPA
+* PostgreSQL
+* Redis (for caching & pub/sub)
+* Kafka (event-driven architecture)
+* Multithreading
+
+Apply:
+
+* Clean Architecture (Hexagonal / Ports & Adapters)
+* SOLID principles
+* Domain-Driven Design (DDD)
+
+Structure:
+
+* domain/
+* application/
+* infrastructure/
+* adapters/
+* config/
+
+---
+
+## 📊 Core Features
+
+### 1. Broker Integration Layer
+
+* Create a Broker interface:
+
+  * placeOrder()
+  * cancelOrder()
+  * getPositions()
+  * getMarketData()
+* Implement:
+
+  * IBKRBrokerService
+  * EtoroBrokerService (mock or unofficial wrapper)
+
+### 2. Trading Engine
+
+* Strategy interface:
+
+  * generateSignal()
+* Implement:
+
+  * Moving Average Strategy
+  * RSI Strategy
+* Risk management:
+
+  * stop-loss
+  * take-profit
+  * max drawdown protection
+
+### 3. Market Data Streaming
+
+* Use WebSockets or IBKR streaming API
+* Store latest ticks in Redis
+
+### 4. Order Management System (OMS)
+
+* Track:
+
+  * orders
+  * executions
+  * positions
+* Ensure idempotency
+
+### 5. Scheduler
+
+* Run strategies periodically
+* Use Quartz or Spring Scheduler
+
+---
+
+## 🔐 Security
+
+* JWT Authentication
+* Role-based access control
+* API rate limiting
+* Secure API key storage (Vault or env variables)
+
+---
+
+## 🌐 Frontend (Angular)
+
+Use:
+
+* Angular 17+
+* RxJS
+* NgRx (state management)
+* Angular Material
+
+Pages:
+
+1. Dashboard
+
+   * Portfolio value
+   * PnL charts
+2. Trading Panel
+
+   * Manual trade execution
+3. Strategy Manager
+
+   * Enable/disable strategies
+4. Logs & Monitoring
+
+---
+
+## 📈 UI Features
+
+* Real-time charts (WebSocket)
+* Trade history table
+* Risk metrics visualization
+
+---
+
+## 🧪 Testing
+
+* Unit tests (JUnit + Mockito)
+* Integration tests (Testcontainers)
+* E2E tests (Cypress)
+
+---
+
+## 🚀 DevOps
+
+* Dockerize all services
+* Docker Compose setup
+* CI/CD pipeline (GitHub Actions)
+* Observability:
+
+  * Prometheus
+  * Grafana
+  * ELK stack
+
+---
+
+## 📦 Deliverables
+
+1. Full project structure
+2. Key backend code (interfaces, services, controllers)
+3. Angular components and services
+4. API contracts (OpenAPI/Swagger)
+5. Example trading strategy implementation
+6. Docker setup
+7. README with setup instructions
+
+---
+
+## ⚠️ Constraints
+
+* Follow clean code principles strictly
+* Use meaningful naming conventions
+* Write modular, testable, extensible code
+* Avoid tight coupling
+* Include comments where necessary
+
+---
+
+## 💡 Bonus
+
+* Add backtesting module
+* Add paper trading mode
+* Multi-user support
+
+Generate complete code snippets and explanations where needed.

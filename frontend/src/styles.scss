@@ -1,0 +1,10 @@
+body {
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  background-color: #fafafa;
+}
+
+.container { max-width: 1400px; margin: 0 auto; padding: 16px; }
+.card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+.positive { color: #4caf50; }
+.negative { color: #f44336; }
