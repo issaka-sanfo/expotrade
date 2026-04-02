@@ -2,7 +2,7 @@ spring:
   application:
     name: expotrade
   datasource:
-    url: jdbc:postgresql://localhost:5432/expotrade
+    url: jdbc:postgresql://${DB_HOST:localhost}:5432/expotrade
     username: ${DB_USERNAME:expotrade}
     password: ${DB_PASSWORD:expotrade}
     driver-class-name: org.postgresql.Driver
