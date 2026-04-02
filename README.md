@@ -1,4 +1,4 @@
-# EpoTrade - Automated Trading Bot Platform
+# ExpoTrade - Automated Trading Bot Platform
 
 A production-grade automated trading platform integrating Interactive Brokers (IBKR) and eToro with real-time monitoring, strategy management, and multi-broker support.
 
