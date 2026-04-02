@@ -14,9 +14,9 @@ A production-grade automated trading platform integrating Interactive Brokers (I
 ### Project Structure
 
 ```
-epotrade/
+expotrade/
 ├── backend/                    # Java Spring Boot backend
-│   └── src/main/java/com/epotrade/
+│   └── src/main/java/com/expotrade/
 │       ├── domain/             # Domain models, ports (interfaces)
 │       │   ├── model/          # Order, Position, Trade, MarketData, etc.
 │       │   ├── port/in/        # Use cases (PlaceOrder, CancelOrder, etc.)
@@ -117,8 +117,8 @@ Key environment variables:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `DB_USERNAME` | epotrade | PostgreSQL username |
-| `DB_PASSWORD` | epotrade | PostgreSQL password |
+| `DB_USERNAME` | expotrade | PostgreSQL username |
+| `DB_PASSWORD` | expotrade | PostgreSQL password |
 | `REDIS_HOST` | localhost | Redis host |
 | `KAFKA_BOOTSTRAP_SERVERS` | localhost:9092 | Kafka servers |
 | `JWT_SECRET` | (default key) | JWT signing secret |

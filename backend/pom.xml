@@ -11,10 +11,10 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.epotrade</groupId>
-    <artifactId>epotrade-backend</artifactId>
+    <groupId>com.expotrade</groupId>
+    <artifactId>expotrade-backend</artifactId>
     <version>1.0.0-SNAPSHOT</version>
-    <name>EpoTrade Backend</name>
+    <name>ExpoTrade Backend</name>
     <description>Automated Trading Bot Platform</description>
 
     <properties>

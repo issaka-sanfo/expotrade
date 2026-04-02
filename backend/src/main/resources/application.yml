@@ -1,10 +1,10 @@
 spring:
   application:
-    name: epotrade
+    name: expotrade
   datasource:
-    url: jdbc:postgresql://localhost:5432/epotrade
-    username: ${DB_USERNAME:epotrade}
-    password: ${DB_PASSWORD:epotrade}
+    url: jdbc:postgresql://localhost:5432/expotrade
+    username: ${DB_USERNAME:expotrade}
+    password: ${DB_PASSWORD:expotrade}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -24,13 +24,13 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
     consumer:
-      group-id: epotrade
+      group-id: expotrade
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
 
 jwt:
-  secret: ${JWT_SECRET:epotrade-default-secret-key-change-in-production-min-256-bits!!}
+  secret: ${JWT_SECRET:expotrade-default-secret-key-change-in-production-min-256-bits!!}
   access-token-validity: 3600000
   refresh-token-validity: 86400000
 
@@ -54,5 +54,5 @@ management:
 
 logging:
   level:
-    com.epotrade: DEBUG
+    com.expotrade: DEBUG
     org.springframework.security: INFO

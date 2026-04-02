@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "epotrade": {
+    "expotrade": {
       "projectType": "application",
       "root": "",
       "sourceRoot": "src",
@@ -12,7 +12,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "dist/epotrade",
+            "outputPath": "dist/expotrade",
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": ["zone.js"],
@@ -43,8 +43,8 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
-            "production": { "buildTarget": "epotrade:build:production" },
-            "development": { "buildTarget": "epotrade:build:development" }
+            "production": { "buildTarget": "expotrade:build:production" },
+            "development": { "buildTarget": "expotrade:build:development" }
           },
           "defaultConfiguration": "development"
         },

@@ -4,11 +4,11 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - DB_USERNAME=epotrade
-      - DB_PASSWORD=epotrade
+      - DB_USERNAME=expotrade
+      - DB_PASSWORD=expotrade
       - REDIS_HOST=redis
       - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-      - JWT_SECRET=epotrade-production-secret-key-change-this-in-production-256!!
+      - JWT_SECRET=expotrade-production-secret-key-change-this-in-production-256!!
     depends_on:
       postgres:
         condition: service_healthy
@@ -29,13 +29,13 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_DB: epotrade
-      POSTGRES_USER: epotrade
-      POSTGRES_PASSWORD: epotrade
+      POSTGRES_DB: expotrade
+      POSTGRES_USER: expotrade
+      POSTGRES_PASSWORD: expotrade
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U epotrade"]
+      test: ["CMD-SHELL", "pg_isready -U expotrade"]
       interval: 5s
       timeout: 5s
       retries: 5

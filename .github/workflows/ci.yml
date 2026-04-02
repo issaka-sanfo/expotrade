@@ -13,9 +13,9 @@ jobs:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_DB: epotrade_test
-          POSTGRES_USER: epotrade
-          POSTGRES_PASSWORD: epotrade
+          POSTGRES_DB: expotrade_test
+          POSTGRES_USER: expotrade
+          POSTGRES_PASSWORD: expotrade
         ports:
           - 5432:5432
         options: >-
@@ -44,7 +44,7 @@ jobs:
 
       - name: Build Docker Image
         working-directory: ./backend
-        run: docker build -t epotrade-backend .
+        run: docker build -t expotrade-backend .
 
   frontend:
     runs-on: ubuntu-latest
