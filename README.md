@@ -235,3 +235,62 @@ cd frontend && npm test
 # E2E tests
 cd frontend && npm run e2e
 ```
+
+## Broker API Communication
+
+### Abstraction Layer (Hexagonal Architecture)
+
+The platform uses a `BrokerPort` interface that defines a common contract for all broker integrations. Each broker has its own adapter implementation:
+
+```
+BrokerPort (interface)
+    ├── EtoroBrokerService   (eToro adapter)
+    └── IBKRBrokerService    (IBKR adapter)
+```
+
+Routing to the correct broker is done dynamically in `OrderService` via a `Map<String, BrokerPort>`:
+
+```java
+BrokerPort broker = brokerPorts.get(command.brokerType().name());
+return broker.placeOrder(savedOrder);
+```
+
+### Operations Exposed by Each Broker
+
+| Method | Role |
+|---|---|
+| `placeOrder()` | Place a trading order |
+| `cancelOrder()` | Cancel an existing order |
+| `getOrderStatus()` | Check order status |
+| `getPositions()` | Retrieve current positions |
+| `getMarketData()` | Single quote (point-in-time) |
+| `streamMarketData()` | Real-time stream (Reactor `Flux`) |
+
+### Current State: Simulated (Mock)
+
+Both adapters are **mock implementations** — they make no real HTTP calls to brokers:
+
+- **eToro**: No public trading API available, so a full mock with synthetic data and `delayElement()` to simulate network latency.
+- **IBKR**: In production, this would integrate with TWS/IB Gateway, but is currently also mocked.
+
+There is **no broker SDK**, **no `WebClient`/`RestTemplate`**, and **no broker credential management** in the current codebase.
+
+### Real-Time Data Flow
+
+```
+Broker Adapter (mock) --> Kafka (expotrade.market-data) --> Redis (cache) --> WebSocket/SSE --> Angular Frontend
+```
+
+- **Kafka** broadcasts events (orders, trades, market data).
+- **Redis** caches prices and a rolling 500-item history.
+- **WebSocket** (`/ws/market-data`) pushes data to the frontend in real time.
+
+### Path to Production Integration
+
+The architecture is **ready for real broker integration** — it would require:
+
+1. Implementing actual HTTP calls in the broker adapters (via Spring `WebClient`).
+2. Adding broker credentials as environment variables (or a secrets vault).
+3. Mapping broker API responses to domain models (`Order`, `Position`, `MarketData`).
+
+**No changes needed in the application layer** — this is the key benefit of the hexagonal architecture pattern.
