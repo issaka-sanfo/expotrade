@@ -29,9 +29,7 @@ import { AuthService } from '../../core/services/auth.service';
         </mat-card-content>
         <mat-card-actions>
           <button mat-raised-button color="primary" (click)="login()" style="width: 100%">Login</button>
-          <div style="text-align: center; margin-top: 12px;">
-            <a mat-button routerLink="/register">Don't have an account? Register</a>
-          </div>
+          <button mat-stroked-button color="accent" routerLink="/register" style="width: 100%; margin-top: 12px;">Don't have an account? Register</button>
         </mat-card-actions>
       </mat-card>
     </div>
