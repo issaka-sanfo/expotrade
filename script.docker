@@ -1,0 +1,1 @@
+docker ps -aq | ForEach-Object { docker stop $_ } 2>$null; docker ps -aq | ForEach-Object { docker rm $_ } 2>$null; docker volume ls -q | ForEach-Object { docker volume rm $_ } 2>$null; docker images -q | ForEach-Object { docker rmi $_ } 2>$null
