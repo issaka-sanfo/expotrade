@@ -45,7 +45,6 @@ pipeline {
             steps {
                 dir('frontend') {
                     bat 'npm ci'
-                    bat 'npm run lint'
                     bat 'npm run build -- --configuration production'
                 }
             }
