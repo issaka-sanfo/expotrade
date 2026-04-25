@@ -1,0 +1,237 @@
+name: Deploy to AWS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        type: choice
+        options:
+          - staging
+          - production
+        default: staging
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: eu-west-1
+  ECS_CLUSTER: expotrade-staging
+  BACKEND_SERVICE: expotrade-staging-backend
+  FRONTEND_SERVICE: expotrade-staging-frontend
+  BACKEND_TASK_FAMILY: expotrade-staging-backend
+  FRONTEND_TASK_FAMILY: expotrade-staging-frontend
+
+jobs:
+  # ────────────────────────────────────────────────────────────────────────────
+  # Test Backend
+  # ────────────────────────────────────────────────────────────────────────────
+  test-backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: expotrade_test
+          POSTGRES_USER: expotrade
+          POSTGRES_PASSWORD: expotrade
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
+          cache: maven
+
+      - name: Build & Test Backend
+        working-directory: ./backend
+        run: mvn clean verify
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # Test Frontend
+  # ────────────────────────────────────────────────────────────────────────────
+  test-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Lint
+        working-directory: ./frontend
+        run: npm run lint
+
+      - name: Build
+        working-directory: ./frontend
+        run: npm run build -- --configuration production
+
+      - name: Test
+        working-directory: ./frontend
+        run: npm run test -- --watch=false --browsers=ChromeHeadless
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # Build Docker Images & Push to ECR
+  # ────────────────────────────────────────────────────────────────────────────
+  build-and-push:
+    needs: [test-backend, test-frontend]
+    runs-on: ubuntu-latest
+    environment: staging
+    outputs:
+      backend-image: ${{ steps.build-backend.outputs.image }}
+      frontend-image: ${{ steps.build-frontend.outputs.image }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build & Push Backend Image
+        id: build-backend
+        env:
+          REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          IMAGE=$REGISTRY/expotrade-staging-backend:$IMAGE_TAG
+          docker build -t $IMAGE ./backend
+          docker push $IMAGE
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+
+      - name: Build & Push Frontend Image
+        id: build-frontend
+        env:
+          REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          IMAGE=$REGISTRY/expotrade-staging-frontend:$IMAGE_TAG
+          docker build --build-arg NGINX_CONF=nginx-aws.conf -t $IMAGE ./frontend
+          docker push $IMAGE
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # Deploy to ECS
+  # ────────────────────────────────────────────────────────────────────────────
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy Backend to ECS
+        env:
+          NEW_IMAGE: ${{ needs.build-and-push.outputs.backend-image }}
+        run: |
+          # Get current task definition
+          TASK_DEF=$(aws ecs describe-task-definition \
+            --task-definition ${{ env.BACKEND_TASK_FAMILY }} \
+            --query 'taskDefinition' --output json)
+
+          # Update image in container definition
+          NEW_TASK_DEF=$(echo "$TASK_DEF" | jq \
+            --arg IMAGE "$NEW_IMAGE" \
+            '.containerDefinitions[0].image = $IMAGE |
+             del(.taskDefinitionArn, .revision, .status, .requiresAttributes,
+                 .compatibilities, .registeredAt, .registeredBy)')
+
+          # Register new task definition
+          aws ecs register-task-definition \
+            --cli-input-json "$NEW_TASK_DEF"
+
+          # Update service to use new task definition
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service ${{ env.BACKEND_SERVICE }} \
+            --task-definition ${{ env.BACKEND_TASK_FAMILY }} \
+            --force-new-deployment
+
+      - name: Deploy Frontend to ECS
+        env:
+          NEW_IMAGE: ${{ needs.build-and-push.outputs.frontend-image }}
+        run: |
+          TASK_DEF=$(aws ecs describe-task-definition \
+            --task-definition ${{ env.FRONTEND_TASK_FAMILY }} \
+            --query 'taskDefinition' --output json)
+
+          NEW_TASK_DEF=$(echo "$TASK_DEF" | jq \
+            --arg IMAGE "$NEW_IMAGE" \
+            '.containerDefinitions[0].image = $IMAGE |
+             del(.taskDefinitionArn, .revision, .status, .requiresAttributes,
+                 .compatibilities, .registeredAt, .registeredBy)')
+
+          aws ecs register-task-definition \
+            --cli-input-json "$NEW_TASK_DEF"
+
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service ${{ env.FRONTEND_SERVICE }} \
+            --task-definition ${{ env.FRONTEND_TASK_FAMILY }} \
+            --force-new-deployment
+
+      - name: Wait for Backend Stability
+        run: |
+          echo "Waiting for backend service to stabilize..."
+          aws ecs wait services-stable \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.BACKEND_SERVICE }}
+
+      - name: Wait for Frontend Stability
+        run: |
+          echo "Waiting for frontend service to stabilize..."
+          aws ecs wait services-stable \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.FRONTEND_SERVICE }}
+
+      - name: Smoke Test
+        run: |
+          ALB_DNS=$(aws elbv2 describe-load-balancers \
+            --names expotrade-staging-alb \
+            --query 'LoadBalancers[0].DNSName' --output text)
+
+          echo "Testing health endpoint at http://$ALB_DNS/actuator/health"
+          for i in 1 2 3; do
+            if curl -sf "http://$ALB_DNS/actuator/health" > /dev/null; then
+              echo "Health check passed!"
+              exit 0
+            fi
+            echo "Attempt $i failed, retrying in 10s..."
+            sleep 10
+          done
+
+          echo "Smoke test failed after 3 attempts"
+          exit 1

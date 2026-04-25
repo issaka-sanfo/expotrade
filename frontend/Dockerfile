@@ -6,6 +6,7 @@ COPY . .
 RUN npm run build -- --configuration production
 
 FROM nginx:alpine
+ARG NGINX_CONF=nginx.conf
 COPY --from=build /app/dist/expotrade/browser /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY ${NGINX_CONF} /etc/nginx/conf.d/default.conf
 EXPOSE 80

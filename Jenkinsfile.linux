@@ -1,0 +1,206 @@
+// Jenkinsfile for cloud-based Jenkins (Linux EC2)
+// Uses IAM Instance Role for AWS auth - no credentials to manage
+// To use: in Jenkins job config, set Script Path to "Jenkinsfile.linux"
+
+pipeline {
+    agent any
+
+    environment {
+        AWS_REGION         = 'eu-west-1'
+        ECS_CLUSTER        = 'expotrade-staging'
+        BACKEND_SERVICE    = 'expotrade-staging-backend'
+        FRONTEND_SERVICE   = 'expotrade-staging-frontend'
+        BACKEND_TASK_FAMILY  = 'expotrade-staging-backend'
+        FRONTEND_TASK_FAMILY = 'expotrade-staging-frontend'
+        BACKEND_ECR_REPO   = 'expotrade-staging-backend'
+        FRONTEND_ECR_REPO  = 'expotrade-staging-frontend'
+        IMAGE_TAG          = "${env.GIT_COMMIT?.take(7) ?: 'latest'}"
+    }
+
+    tools {
+        jdk 'JDK21'
+        nodejs 'Node20'
+        maven 'Maven3'
+    }
+
+    options {
+        timestamps()
+        timeout(time: 30, unit: 'MINUTES')
+        disableConcurrentBuilds()
+    }
+
+    stages {
+        // ─── Test Backend ───────────────────────────────────────────────
+        stage('Test Backend') {
+            steps {
+                dir('backend') {
+                    sh 'mvn clean verify -DskipDocker'
+                }
+            }
+            post {
+                always {
+                    junit allowEmptyResults: true, testResults: 'backend/target/surefire-reports/*.xml'
+                }
+            }
+        }
+
+        // ─── Test Frontend ──────────────────────────────────────────────
+        stage('Test Frontend') {
+            steps {
+                dir('frontend') {
+                    sh 'npm ci'
+                    sh 'npm run lint'
+                    sh 'npm run build -- --configuration production'
+                }
+            }
+        }
+
+        // ─── Login to ECR ───────────────────────────────────────────────
+        stage('ECR Login') {
+            steps {
+                script {
+                    def accountId = sh(
+                        script: "aws sts get-caller-identity --query Account --output text --region ${AWS_REGION}",
+                        returnStdout: true
+                    ).trim()
+                    env.ECR_REGISTRY = "${accountId}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+
+                    sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${env.ECR_REGISTRY}"
+                }
+            }
+        }
+
+        // ─── Build & Push Docker Images ─────────────────────────────────
+        stage('Build & Push Images') {
+            parallel {
+                stage('Backend Image') {
+                    steps {
+                        script {
+                            def image = "${env.ECR_REGISTRY}/${BACKEND_ECR_REPO}:${IMAGE_TAG}"
+                            sh "docker build -t ${image} ./backend"
+                            sh "docker push ${image}"
+                            env.BACKEND_IMAGE = image
+                        }
+                    }
+                }
+                stage('Frontend Image') {
+                    steps {
+                        script {
+                            def image = "${env.ECR_REGISTRY}/${FRONTEND_ECR_REPO}:${IMAGE_TAG}"
+                            sh "docker build --build-arg NGINX_CONF=nginx-aws.conf -t ${image} ./frontend"
+                            sh "docker push ${image}"
+                            env.FRONTEND_IMAGE = image
+                        }
+                    }
+                }
+            }
+        }
+
+        // ─── Deploy to ECS ──────────────────────────────────────────────
+        stage('Deploy to ECS') {
+            parallel {
+                stage('Deploy Backend') {
+                    steps {
+                        script {
+                            deployToECS(
+                                taskFamily: BACKEND_TASK_FAMILY,
+                                service: BACKEND_SERVICE,
+                                image: env.BACKEND_IMAGE
+                            )
+                        }
+                    }
+                }
+                stage('Deploy Frontend') {
+                    steps {
+                        script {
+                            deployToECS(
+                                taskFamily: FRONTEND_TASK_FAMILY,
+                                service: FRONTEND_SERVICE,
+                                image: env.FRONTEND_IMAGE
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // ─── Wait for Stability ─────────────────────────────────────────
+        stage('Wait for Stability') {
+            steps {
+                echo 'Waiting for ECS services to stabilize...'
+                sh "aws ecs wait services-stable --cluster ${ECS_CLUSTER} --services ${BACKEND_SERVICE} ${FRONTEND_SERVICE} --region ${AWS_REGION}"
+            }
+        }
+
+        // ─── Smoke Test ─────────────────────────────────────────────────
+        stage('Smoke Test') {
+            steps {
+                script {
+                    def albDns = sh(
+                        script: "aws elbv2 describe-load-balancers --names expotrade-staging-alb --query 'LoadBalancers[0].DNSName' --output text --region ${AWS_REGION}",
+                        returnStdout: true
+                    ).trim()
+                    echo "ALB DNS: ${albDns}"
+
+                    sh """
+                        for i in 1 2 3; do
+                            if curl -sf http://${albDns}/actuator/health > /dev/null; then
+                                echo 'Health check passed!'
+                                exit 0
+                            fi
+                            echo "Attempt \$i failed, retrying in 10s..."
+                            sleep 10
+                        done
+                        echo 'Smoke test failed after 3 attempts'
+                        exit 1
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Deployment successful! Image tag: ${IMAGE_TAG}"
+        }
+        failure {
+            echo 'Deployment failed. Check the logs above for details.'
+        }
+        always {
+            cleanWs()
+        }
+    }
+}
+
+// ─── Helper: Deploy a service to ECS ────────────────────────────────────────
+def deployToECS(Map args) {
+    def taskFamily = args.taskFamily
+    def service = args.service
+    def image = args.image
+
+    // Get current task definition, update image, clean metadata, register & deploy
+    sh """
+        aws ecs describe-task-definition \
+            --task-definition ${taskFamily} \
+            --query 'taskDefinition' \
+            --output json \
+            --region ${AWS_REGION} > task-def-${taskFamily}.json
+
+        jq --arg IMAGE '${image}' \
+            '.containerDefinitions[0].image = \$IMAGE |
+             del(.taskDefinitionArn, .revision, .status, .requiresAttributes,
+                 .compatibilities, .registeredAt, .registeredBy)' \
+            task-def-${taskFamily}.json > new-task-def-${taskFamily}.json
+
+        aws ecs register-task-definition \
+            --cli-input-json file://new-task-def-${taskFamily}.json \
+            --region ${AWS_REGION}
+
+        aws ecs update-service \
+            --cluster ${ECS_CLUSTER} \
+            --service ${service} \
+            --task-definition ${taskFamily} \
+            --force-new-deployment \
+            --region ${AWS_REGION}
+    """
+}
