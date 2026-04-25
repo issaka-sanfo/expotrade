@@ -146,16 +146,17 @@ pipeline {
                     def healthy = false
                     for (int i = 0; i < 5; i++) {
                         def status = bat(
-                            script: "@curl -sf http://${albDns}/actuator/health -o nul -w %%{http_code}",
+                            script: "@curl -s -o NUL -w \"%{http_code}\" http://${albDns}/actuator/health",
                             returnStdout: true
                         ).trim()
+
+                        echo "Attempt ${i + 1}/5 - HTTP status: ${status}"
 
                         if (status == '200') {
                             healthy = true
                             echo 'Smoke test passed - deployment successful!'
                             break
                         }
-                        echo "Attempt ${i + 1}/5 - Health check returned: ${status}. Waiting 30s..."
                         sleep 30
                     }
 
