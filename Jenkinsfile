@@ -142,15 +142,26 @@ pipeline {
                     ).trim()
                     echo "ALB DNS: ${albDns}"
 
-                    def status = bat(
-                        script: "@curl -sf http://${albDns}/actuator/health -o nul -w %%{http_code}",
-                        returnStdout: true
-                    ).trim()
+                    // Retry up to 5 times with 30s wait — ALB targets may need time to become healthy
+                    def healthy = false
+                    for (int i = 0; i < 5; i++) {
+                        def status = bat(
+                            script: "@curl -sf http://${albDns}/actuator/health -o nul -w %%{http_code}",
+                            returnStdout: true
+                        ).trim()
 
-                    if (status != '200') {
-                        error "Smoke test failed! Health check returned: ${status}"
+                        if (status == '200') {
+                            healthy = true
+                            echo 'Smoke test passed - deployment successful!'
+                            break
+                        }
+                        echo "Attempt ${i + 1}/5 - Health check returned: ${status}. Waiting 30s..."
+                        sleep 30
                     }
-                    echo 'Smoke test passed - deployment successful!'
+
+                    if (!healthy) {
+                        error 'Smoke test failed after 5 attempts!'
+                    }
                 }
             }
         }
