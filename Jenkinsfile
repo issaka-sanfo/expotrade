@@ -3,6 +3,8 @@ pipeline {
 
     environment {
         AWS_REGION         = 'eu-west-1'
+        AWS_ACCESS_KEY_ID     = credentials('aws-access-key-id')
+        AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key')
         ECS_CLUSTER        = 'expotrade-staging'
         BACKEND_SERVICE    = 'expotrade-staging-backend'
         FRONTEND_SERVICE   = 'expotrade-staging-frontend'
