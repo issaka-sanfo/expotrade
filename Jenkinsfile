@@ -73,8 +73,10 @@ pipeline {
                     steps {
                         script {
                             def image = "${env.ECR_REGISTRY}/${BACKEND_ECR_REPO}:${IMAGE_TAG}"
-                            bat "docker build -t ${image} ./backend"
+                            def latest = "${env.ECR_REGISTRY}/${BACKEND_ECR_REPO}:latest"
+                            bat "docker build -t ${image} -t ${latest} ./backend"
                             bat "docker push ${image}"
+                            bat "docker push ${latest}"
                             env.BACKEND_IMAGE = image
                         }
                     }
@@ -83,8 +85,10 @@ pipeline {
                     steps {
                         script {
                             def image = "${env.ECR_REGISTRY}/${FRONTEND_ECR_REPO}:${IMAGE_TAG}"
-                            bat "docker build --build-arg NGINX_CONF=nginx-aws.conf -t ${image} ./frontend"
+                            def latest = "${env.ECR_REGISTRY}/${FRONTEND_ECR_REPO}:latest"
+                            bat "docker build --build-arg NGINX_CONF=nginx-aws.conf -t ${image} -t ${latest} ./frontend"
                             bat "docker push ${image}"
+                            bat "docker push ${latest}"
                             env.FRONTEND_IMAGE = image
                         }
                     }
