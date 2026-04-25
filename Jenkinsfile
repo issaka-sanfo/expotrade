@@ -133,13 +133,13 @@ pipeline {
             steps {
                 script {
                     def albDns = bat(
-                        script: "aws elbv2 describe-load-balancers --names expotrade-staging-alb --query \"LoadBalancers[0].DNSName\" --output text --region ${AWS_REGION}",
+                        script: "@aws elbv2 describe-load-balancers --names expotrade-staging-alb --query \"LoadBalancers[0].DNSName\" --output text --region ${AWS_REGION}",
                         returnStdout: true
                     ).trim()
                     echo "ALB DNS: ${albDns}"
 
                     def status = bat(
-                        script: "curl -sf http://${albDns}/actuator/health -o nul -w %%{http_code}",
+                        script: "@curl -sf http://${albDns}/actuator/health -o nul -w %%{http_code}",
                         returnStdout: true
                     ).trim()
 
