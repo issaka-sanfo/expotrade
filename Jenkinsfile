@@ -56,16 +56,12 @@ pipeline {
         stage('ECR Login') {
             steps {
                 script {
-                    def loginCmd = bat(
-                        script: "aws ecr get-login-password --region ${AWS_REGION}",
-                        returnStdout: true
-                    ).trim()
                     def accountId = bat(
-                        script: "aws sts get-caller-identity --query Account --output text",
+                        script: '@aws sts get-caller-identity --query Account --output text',
                         returnStdout: true
                     ).trim()
                     env.ECR_REGISTRY = "${accountId}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-                    bat "docker login --username AWS --password-stdin ${env.ECR_REGISTRY} < nul || echo ${loginCmd} | docker login --username AWS --password-stdin ${env.ECR_REGISTRY}"
+                    bat "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${env.ECR_REGISTRY}"
                 }
             }
         }
