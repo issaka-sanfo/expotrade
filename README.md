@@ -73,7 +73,9 @@ ExpoTrade follows a **hexagonal (clean) architecture**. The domain logic is fram
 |---|---|
 | **PostgreSQL** | Persistent storage (orders, trades, positions, users) |
 | **Redis** | Market data cache (latest ticks + history) |
-| **Kafka** | Event streaming between components |
+| **Kafka + Zookeeper** | Event streaming between components |
+| **Nginx** | Frontend web server and reverse proxy |
+| **Docker / Docker Compose** | Containerization and local orchestration |
 | **Prometheus** | Metrics collection from `/actuator/prometheus` |
 | **Grafana** | Real-time monitoring dashboards |
 
@@ -88,12 +90,62 @@ ExpoTrade follows a **hexagonal (clean) architecture**. The domain logic is fram
 
 ## Tech Stack
 
-- **Backend**: Java 21 + Spring Boot 3 (Hexagonal/Clean Architecture)
-- **Frontend**: Angular 17 + NgRx + Angular Material
-- **Database**: PostgreSQL
-- **Cache**: Redis
-- **Messaging**: Apache Kafka
-- **Monitoring**: Prometheus + Grafana
+### Backend
+- **Java 21** + **Spring Boot 3** (Hexagonal/Clean Architecture)
+- **Spring Security** — authentication & authorization
+- **JJWT** — JWT token generation and validation
+- **Spring Data JPA** + **Hibernate** — ORM and database access
+- **Spring Data Redis** — Redis cache integration
+- **Spring Kafka** — event streaming
+- **Project Reactor** — reactive programming (`Mono`/`Flux`)
+- **Bucket4j** — API rate limiting
+- **SpringDoc OpenAPI** — Swagger UI and API documentation
+- **Micrometer** — Prometheus metrics export
+- **Maven** — build tool (with Maven Wrapper)
+
+### Frontend
+- **Angular 17** + **TypeScript**
+- **NgRx** — state management
+- **Angular Material** + **Angular CDK** — UI components
+- **Chart.js** + **ng2-charts** — data visualization and charts
+- **RxJS** — reactive programming
+
+### Database & Messaging
+- **PostgreSQL** — persistent storage (orders, trades, positions, users)
+- **Redis** — market data cache (latest ticks + rolling history)
+- **Apache Kafka** (Confluent) + **Zookeeper** — event streaming
+
+### Monitoring
+- **Prometheus** — metrics collection from `/actuator/prometheus`
+- **Grafana** — real-time monitoring dashboards
+
+### Infrastructure & DevOps
+- **Docker** + **Docker Compose** — containerization and local orchestration
+- **Nginx** — web server / reverse proxy for frontend
+- **Terraform** — Infrastructure as Code for AWS provisioning
+- **Jenkins** — CI/CD pipeline (Windows local + Linux cloud)
+- **GitHub Actions** — CI/CD pipeline (alternative)
+
+### AWS Services
+- **ECS Fargate** — container orchestration
+- **ECR** — Docker image registry
+- **ALB** — Application Load Balancer with path-based routing
+- **RDS** — managed PostgreSQL
+- **ElastiCache** — managed Redis
+- **EC2** — Kafka instance
+- **Secrets Manager** — DB password and JWT secret
+- **CloudWatch** — log aggregation
+- **S3** + **DynamoDB** — Terraform state backend and locking
+- **IAM** — roles, OIDC provider for GitHub Actions
+- **VPC** — networking (public/private subnets, NAT Gateway)
+
+### Testing
+- **JUnit 5** + **Mockito** — backend unit tests
+- **TestContainers** — backend integration tests (PostgreSQL, Kafka in containers)
+- **H2 Database** — in-memory database for tests
+- **Spring Security Test** — security layer testing
+- **Karma** + **Jasmine** — frontend unit tests
+- **Cypress** — frontend E2E tests
 
 ## Project Structure
 
@@ -117,8 +169,14 @@ expotrade/
 │       ├── shared/             # Models, pipes, shared components
 │       └── store/              # NgRx state management
 ├── monitoring/                 # Prometheus config
-├── docker-compose.yml          # Full stack orchestration
-└── .github/workflows/ci.yml   # CI/CD pipeline
+├── infra/terraform/            # AWS infrastructure as code (Terraform)
+│   ├── scripts/                # User data scripts (Kafka, Jenkins)
+│   └── envs/                   # Environment-specific tfvars
+├── docker-compose.yml          # Full stack local orchestration
+├── Jenkinsfile                 # Jenkins pipeline (Windows local)
+├── Jenkinsfile.linux           # Jenkins pipeline (Linux cloud)
+├── .github/workflows/ci.yml   # CI pipeline (PRs)
+└── .github/workflows/deploy.yml # CD pipeline (GitHub Actions)
 ```
 
 ## Quick Start
@@ -128,6 +186,9 @@ expotrade/
 - Docker & Docker Compose
 - Java 21+ (for local dev)
 - Node.js 20+ (for local dev)
+- Maven 3.9+ (or use included Maven Wrapper `./mvnw`)
+- AWS CLI v2 + Terraform 1.5+ (for cloud deployment)
+- Jenkins (for CI/CD pipeline)
 
 ### Run with Docker Compose
 
@@ -179,6 +240,8 @@ curl -X POST http://localhost:8080/api/v1/auth/login \
 
 ## API Endpoints
 
+Full interactive API documentation available via **Swagger UI** at `/swagger-ui.html` (powered by SpringDoc OpenAPI).
+
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | POST | `/api/v1/auth/register` | Register new user |
@@ -209,10 +272,10 @@ curl -X POST http://localhost:8080/api/v1/auth/login \
 
 ## Security
 
-- JWT-based authentication with access/refresh tokens
-- BCrypt password hashing
+- **JJWT**-based authentication with access (1h) / refresh (24h) tokens
+- **BCrypt** password hashing (Spring Security)
 - Role-based access control
-- API rate limiting (100 req/min per IP)
+- API rate limiting (100 req/min per IP) via **Bucket4j**
 - CORS configured for frontend origin
 
 ## Configuration
@@ -230,14 +293,18 @@ Key environment variables:
 
 ## Testing
 
+**Backend** (JUnit 5 + Mockito + TestContainers):
 ```bash
-# Backend unit & integration tests
 cd backend && ./mvnw test
+```
 
-# Frontend tests
+**Frontend unit tests** (Karma + Jasmine):
+```bash
 cd frontend && npm test
+```
 
-# E2E tests
+**Frontend E2E tests** (Cypress):
+```bash
 cd frontend && npm run e2e
 ```
 
