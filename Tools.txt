@@ -1,0 +1,511 @@
+================================================================================
+                        ExpoTrade - Project Tools & Keywords
+================================================================================
+
+────────────────────────────────────────────────────────────────────────────────
+ BACKEND
+────────────────────────────────────────────────────────────────────────────────
+
+Java 21
+  - Signification: Programming language (Long-Term Support version 21)
+  - Purpose: Core language for the backend application, provides virtual threads
+    and modern language features.
+
+Spring Boot 3
+  - Signification: Java framework for building production-ready applications
+  - Purpose: Main backend framework providing auto-configuration, dependency
+    injection, embedded Tomcat server, and REST API support.
+
+Spring Security
+  - Signification: Authentication and authorization framework for Spring
+  - Purpose: Secures API endpoints, handles user authentication, role-based
+    access control, and CORS configuration.
+
+Spring Data JPA
+  - Signification: Spring module for Java Persistence API
+  - Purpose: Simplifies database access with repository interfaces, automatic
+    query generation, and entity management.
+
+Hibernate
+  - Signification: Object-Relational Mapping (ORM) framework
+  - Purpose: Maps Java objects to database tables, handles SQL generation,
+    schema validation/creation (ddl-auto), and database migrations.
+
+Spring Data Redis
+  - Signification: Spring module for Redis data access
+  - Purpose: Integrates Redis cache for storing market data ticks and rolling
+    price history with simple annotations and templates.
+
+Spring Kafka
+  - Signification: Spring module for Apache Kafka integration
+  - Purpose: Produces and consumes events (orders, trades, market data,
+    strategies) across Kafka topics for event-driven architecture.
+
+Project Reactor
+  - Signification: Reactive programming library for the JVM
+  - Purpose: Provides Mono (single value) and Flux (stream) types for
+    non-blocking, high-throughput market data flow and broker communication.
+
+JJWT (JSON Web Token)
+  - Signification: Java library for creating and verifying JWT tokens
+  - Purpose: Generates access tokens (1h) and refresh tokens (24h) for
+    stateless authentication between frontend and backend.
+
+BCrypt
+  - Signification: Password hashing algorithm
+  - Purpose: Securely hashes user passwords before storing in the database,
+    making them resistant to brute-force attacks.
+
+Bucket4j
+  - Signification: Java rate limiting library based on token-bucket algorithm
+  - Purpose: Limits API requests to 100 per minute per IP address to prevent
+    abuse and ensure fair usage.
+
+SpringDoc OpenAPI
+  - Signification: Library for generating OpenAPI 3.0 documentation from Spring
+  - Purpose: Auto-generates interactive Swagger UI at /swagger-ui.html for
+    API exploration and testing.
+
+Micrometer
+  - Signification: Application metrics facade for the JVM
+  - Purpose: Exports application metrics (request counts, latencies, JVM stats)
+    to Prometheus via the /actuator/prometheus endpoint.
+
+Jackson
+  - Signification: JSON serialization/deserialization library for Java
+  - Purpose: Converts Java objects to/from JSON for REST API requests and
+    responses. Jackson Datatype JSR310 handles Java time types (LocalDateTime).
+
+Maven
+  - Signification: Build automation and dependency management tool for Java
+  - Purpose: Compiles code, runs tests, manages dependencies (pom.xml), and
+    packages the backend into a JAR file for deployment.
+
+Maven Wrapper (mvnw)
+  - Signification: Script that auto-downloads the correct Maven version
+  - Purpose: Ensures consistent Maven version across all environments without
+    requiring a global Maven installation.
+
+Hexagonal Architecture
+  - Signification: Software design pattern (also called Ports & Adapters)
+  - Purpose: Separates domain logic from infrastructure. Brokers, databases,
+    and messaging systems are swappable adapters behind port interfaces.
+
+Strategy Pattern
+  - Signification: Behavioral design pattern
+  - Purpose: Allows adding new trading algorithms (Moving Average, RSI,
+    Bollinger Bands) by implementing the TradingStrategy interface.
+
+────────────────────────────────────────────────────────────────────────────────
+ FRONTEND
+────────────────────────────────────────────────────────────────────────────────
+
+Angular 17
+  - Signification: TypeScript-based web application framework by Google
+  - Purpose: Builds the Single Page Application (SPA) with components for
+    Dashboard, Trading, Strategies, and Monitoring pages.
+
+TypeScript
+  - Signification: Typed superset of JavaScript
+  - Purpose: Adds static typing to JavaScript for safer code, better IDE
+    support, and compile-time error detection in the frontend.
+
+NgRx
+  - Signification: Reactive state management library for Angular (Redux pattern)
+  - Purpose: Manages application state (portfolio, orders, strategies) in a
+    centralized store with actions, reducers, effects, and selectors.
+
+Angular Material
+  - Signification: UI component library based on Google's Material Design
+  - Purpose: Provides pre-built UI components (tables, buttons, forms, dialogs,
+    cards) for a consistent and professional look.
+
+Angular CDK (Component Dev Kit)
+  - Signification: Foundation utilities for building Angular UI components
+  - Purpose: Provides layout, overlay, drag-drop, and accessibility utilities
+    used by Angular Material and custom components.
+
+Chart.js
+  - Signification: JavaScript charting library
+  - Purpose: Renders interactive charts (line, bar, pie) for portfolio
+    performance, P&L visualization, and market data trends.
+
+ng2-charts
+  - Signification: Angular wrapper for Chart.js
+  - Purpose: Integrates Chart.js into Angular components with data binding
+    and reactive updates when data changes.
+
+RxJS
+  - Signification: Reactive Extensions for JavaScript
+  - Purpose: Handles asynchronous data streams (HTTP requests, WebSocket
+    messages, user events) with observables and operators.
+
+SCSS
+  - Signification: Syntactically Awesome Style Sheets (CSS preprocessor)
+  - Purpose: Styles the application with variables, nesting, and mixins for
+    maintainable and reusable CSS.
+
+WebSocket
+  - Signification: Full-duplex communication protocol over TCP
+  - Purpose: Pushes real-time market data from the backend to the Angular
+    frontend via the /ws/market-data endpoint.
+
+SSE (Server-Sent Events)
+  - Signification: HTTP-based protocol for server-to-client streaming
+  - Purpose: Alternative to WebSocket for streaming market data via the
+    /api/v1/market-data/stream/{broker} endpoint.
+
+npm
+  - Signification: Node Package Manager
+  - Purpose: Manages frontend dependencies (package.json), runs scripts
+    (build, test, start), and installs libraries.
+
+────────────────────────────────────────────────────────────────────────────────
+ DATABASE & MESSAGING
+────────────────────────────────────────────────────────────────────────────────
+
+PostgreSQL
+  - Signification: Open-source relational database management system
+  - Purpose: Stores persistent data: users, orders, trades, positions, broker
+    accounts, and strategies.
+
+Redis
+  - Signification: In-memory key-value data store
+  - Purpose: Caches latest market data ticks and maintains a rolling 500-item
+    price history for fast access by the trading engine.
+
+Apache Kafka
+  - Signification: Distributed event streaming platform
+  - Purpose: Publishes and consumes events across topics (expotrade.orders,
+    expotrade.trades, expotrade.strategies, expotrade.market-data).
+
+Zookeeper
+  - Signification: Centralized coordination service for distributed systems
+  - Purpose: Manages Kafka broker metadata, leader election, and cluster
+    coordination. Runs alongside Kafka.
+
+────────────────────────────────────────────────────────────────────────────────
+ MONITORING
+────────────────────────────────────────────────────────────────────────────────
+
+Prometheus
+  - Signification: Open-source monitoring and alerting toolkit
+  - Purpose: Scrapes application metrics from /actuator/prometheus endpoint
+    and stores time-series data for querying.
+
+Grafana
+  - Signification: Open-source analytics and visualization platform
+  - Purpose: Displays real-time monitoring dashboards with charts and alerts
+    based on Prometheus metrics data.
+
+Spring Boot Actuator
+  - Signification: Spring module for production-ready features
+  - Purpose: Exposes health checks (/actuator/health), metrics
+    (/actuator/prometheus), and application info endpoints.
+
+────────────────────────────────────────────────────────────────────────────────
+ CONTAINERIZATION & WEB SERVER
+────────────────────────────────────────────────────────────────────────────────
+
+Docker
+  - Signification: Container platform for packaging applications
+  - Purpose: Packages backend and frontend into container images with all
+    dependencies for consistent deployment across environments.
+
+Docker Compose
+  - Signification: Tool for defining multi-container Docker applications
+  - Purpose: Orchestrates the full local stack (backend, frontend, PostgreSQL,
+    Redis, Kafka, Zookeeper, Prometheus, Grafana) with one command.
+
+Dockerfile
+  - Signification: Text file with instructions to build a Docker image
+  - Purpose: Defines multi-stage builds - compiles code in a build stage,
+    then copies artifacts to a minimal runtime image.
+
+Nginx
+  - Signification: High-performance web server and reverse proxy
+  - Purpose: Serves the Angular static files in production, handles routing
+    (try_files for SPA), and provides a /health endpoint.
+
+────────────────────────────────────────────────────────────────────────────────
+ INFRASTRUCTURE AS CODE
+────────────────────────────────────────────────────────────────────────────────
+
+Terraform
+  - Signification: Infrastructure as Code (IaC) tool by HashiCorp
+  - Purpose: Defines and provisions all AWS infrastructure (VPC, ECS, RDS,
+    ElastiCache, ALB, ECR, IAM) in declarative .tf files.
+
+HCL (HashiCorp Configuration Language)
+  - Signification: Declarative configuration language used by Terraform
+  - Purpose: Writes infrastructure definitions in .tf files with resources,
+    variables, outputs, and data sources.
+
+tfvars
+  - Signification: Terraform variable definition files
+  - Purpose: Stores environment-specific values (envs/staging.tfvars) like
+    instance sizes, region, and database names.
+
+Terraform State (S3 + DynamoDB)
+  - Signification: Record of infrastructure managed by Terraform
+  - Purpose: S3 stores the state file, DynamoDB provides state locking to
+    prevent concurrent modifications.
+
+────────────────────────────────────────────────────────────────────────────────
+ AWS SERVICES
+────────────────────────────────────────────────────────────────────────────────
+
+AWS (Amazon Web Services)
+  - Signification: Cloud computing platform by Amazon
+  - Purpose: Hosts the entire ExpoTrade production infrastructure in the
+    eu-west-1 (Ireland) region.
+
+VPC (Virtual Private Cloud)
+  - Signification: Isolated virtual network in AWS
+  - Purpose: Provides network isolation with public subnets (ALB, NAT) and
+    private subnets (ECS, RDS, Redis, Kafka) in CIDR 10.0.0.0/16.
+
+ECS Fargate (Elastic Container Service)
+  - Signification: Serverless container orchestration service
+  - Purpose: Runs backend and frontend Docker containers without managing
+    servers. Handles scaling, health checks, and rolling deployments.
+
+ECR (Elastic Container Registry)
+  - Signification: Managed Docker container image registry
+  - Purpose: Stores backend and frontend Docker images pushed by CI/CD
+    pipeline, with lifecycle policy keeping last 10 images.
+
+ALB (Application Load Balancer)
+  - Signification: Layer 7 HTTP/HTTPS load balancer
+  - Purpose: Routes traffic by path: /api/* and /ws/* to backend, /* to
+    frontend. Provides health checks and WebSocket support (300s timeout).
+
+RDS (Relational Database Service)
+  - Signification: Managed relational database service
+  - Purpose: Runs PostgreSQL 16 on db.t3.micro in private subnets with
+    automated backups and encryption at rest.
+
+ElastiCache
+  - Signification: Managed in-memory caching service
+  - Purpose: Runs Redis 7 on cache.t3.micro in private subnets for market
+    data caching, replacing the local Redis container.
+
+EC2 (Elastic Compute Cloud)
+  - Signification: Virtual server instances in AWS
+  - Purpose: Runs Kafka + Zookeeper on a t3.micro instance via Docker Compose
+    in a private subnet (cost-effective vs. MSK).
+
+NAT Gateway
+  - Signification: Network Address Translation service
+  - Purpose: Allows private subnet resources (ECS tasks, Kafka EC2) to access
+    the internet for pulling Docker images and updates.
+
+IGW (Internet Gateway)
+  - Signification: Gateway connecting a VPC to the internet
+  - Purpose: Enables internet access for resources in public subnets (ALB).
+
+Security Groups
+  - Signification: Virtual firewalls for AWS resources
+  - Purpose: Controls inbound/outbound traffic: ALB(80,443), backend(8080),
+    frontend(80), RDS(5432), Redis(6379), Kafka(9092).
+
+Secrets Manager
+  - Signification: AWS service for managing secrets
+  - Purpose: Stores database password and JWT secret securely, injected into
+    ECS task definitions at runtime.
+
+CloudWatch
+  - Signification: AWS monitoring and logging service
+  - Purpose: Collects and stores container logs from ECS tasks with 30-day
+    retention for debugging and monitoring.
+
+IAM (Identity and Access Management)
+  - Signification: AWS service for managing access permissions
+  - Purpose: Defines roles for ECS tasks (execution role, task role), GitHub
+    Actions (OIDC), and Jenkins (instance profile with ECR/ECS permissions).
+
+S3 (Simple Storage Service)
+  - Signification: Object storage service
+  - Purpose: Stores Terraform state file (expotrade-terraform-state bucket)
+    with versioning enabled for state history.
+
+DynamoDB
+  - Signification: Managed NoSQL key-value database
+  - Purpose: Provides Terraform state locking (expotrade-terraform-lock table)
+    to prevent concurrent infrastructure modifications.
+
+SSM (Systems Manager)
+  - Signification: AWS service for managing and accessing EC2 instances
+  - Purpose: Enables remote access to the Kafka EC2 instance in the private
+    subnet without SSH or a bastion host.
+
+AWS CLI
+  - Signification: Command-line interface for AWS services
+  - Purpose: Manages AWS resources from the terminal - used in CI/CD pipelines
+    for ECR login, ECS deployments, and infrastructure commands.
+
+OIDC (OpenID Connect)
+  - Signification: Identity authentication protocol
+  - Purpose: Allows GitHub Actions to assume an AWS IAM role without storing
+    long-lived AWS credentials as secrets.
+
+────────────────────────────────────────────────────────────────────────────────
+ CI/CD (Continuous Integration / Continuous Deployment)
+────────────────────────────────────────────────────────────────────────────────
+
+Jenkins
+  - Signification: Open-source automation server for CI/CD
+  - Purpose: Runs the deployment pipeline (test, build, push to ECR, deploy
+    to ECS). Available in Windows local and Linux cloud variants.
+
+Jenkinsfile
+  - Signification: Declarative pipeline definition file for Jenkins
+  - Purpose: Defines pipeline stages as code, stored in the repository.
+    Jenkinsfile (Windows/bat) and Jenkinsfile.linux (Linux/sh).
+
+GitHub Actions
+  - Signification: CI/CD platform built into GitHub
+  - Purpose: Alternative pipeline triggered on push to main. Uses OIDC for
+    AWS authentication without stored credentials.
+
+CI (Continuous Integration)
+  - Signification: Practice of automatically testing code on every change
+  - Purpose: Runs backend tests (mvn verify) and frontend build on every
+    pull request via .github/workflows/ci.yml.
+
+CD (Continuous Deployment)
+  - Signification: Practice of automatically deploying tested code
+  - Purpose: After tests pass, builds Docker images, pushes to ECR, and
+    deploys to ECS Fargate automatically.
+
+────────────────────────────────────────────────────────────────────────────────
+ TESTING
+────────────────────────────────────────────────────────────────────────────────
+
+JUnit 5
+  - Signification: Java testing framework
+  - Purpose: Writes and runs backend unit and integration tests with
+    annotations (@Test, @BeforeEach, @SpringBootTest).
+
+Mockito
+  - Signification: Java mocking framework
+  - Purpose: Creates mock objects for unit testing, isolating components
+    from their dependencies (e.g., mocking repositories, broker ports).
+
+TestContainers
+  - Signification: Java library for throwaway Docker containers in tests
+  - Purpose: Spins up real PostgreSQL and Kafka containers during integration
+    tests for production-realistic testing.
+
+H2 Database
+  - Signification: Lightweight in-memory Java SQL database
+  - Purpose: Provides a fast, disposable database for unit tests that don't
+    need a full PostgreSQL instance.
+
+Spring Security Test
+  - Signification: Testing utilities for Spring Security
+  - Purpose: Tests authentication and authorization logic with mock users,
+    JWT tokens, and security context setup.
+
+Karma
+  - Signification: Test runner for JavaScript
+  - Purpose: Executes Angular unit tests in a real browser (Chrome) and
+    reports results with code coverage.
+
+Jasmine
+  - Signification: Behavior-driven testing framework for JavaScript
+  - Purpose: Provides describe/it/expect syntax for writing readable
+    frontend unit test specifications.
+
+Cypress
+  - Signification: End-to-end testing framework for web applications
+  - Purpose: Simulates real user interactions (click, type, navigate) in a
+    browser to test complete user workflows.
+
+────────────────────────────────────────────────────────────────────────────────
+ PROTOCOLS & FORMATS
+────────────────────────────────────────────────────────────────────────────────
+
+REST (Representational State Transfer)
+  - Signification: Architectural style for web APIs
+  - Purpose: All backend endpoints follow REST conventions (GET, POST, PUT,
+    DELETE) with JSON request/response bodies.
+
+JSON (JavaScript Object Notation)
+  - Signification: Lightweight data interchange format
+  - Purpose: Standard format for API requests, responses, configuration files,
+    and Kafka event payloads.
+
+JWT (JSON Web Token)
+  - Signification: Compact token format for secure claims transmission
+  - Purpose: Encodes user identity and roles in a signed token sent with
+    every API request in the Authorization header.
+
+YAML
+  - Signification: Human-readable data serialization format
+  - Purpose: Used for Spring configuration files (application.yml,
+    application-aws.yml), Docker Compose, and GitHub Actions workflows.
+
+HTTP/HTTPS
+  - Signification: HyperText Transfer Protocol (Secure)
+  - Purpose: Communication protocol between frontend and backend. HTTP for
+    staging, HTTPS with ACM certificate for production.
+
+PLAINTEXT (Kafka)
+  - Signification: Unencrypted Kafka communication protocol
+  - Purpose: Kafka broker uses PLAINTEXT within the private VPC (same as
+    local docker-compose setup, no SSL overhead needed).
+
+────────────────────────────────────────────────────────────────────────────────
+ CONFIGURATION & BUILD
+────────────────────────────────────────────────────────────────────────────────
+
+pom.xml
+  - Signification: Project Object Model file for Maven
+  - Purpose: Declares all backend dependencies, plugins, build configuration,
+    and project metadata.
+
+package.json
+  - Signification: Node.js project manifest file
+  - Purpose: Declares frontend dependencies, dev dependencies, and scripts
+    (start, build, test, e2e).
+
+angular.json
+  - Signification: Angular CLI workspace configuration file
+  - Purpose: Defines build configurations (production/development), file
+    replacements (environment files), output paths, and budgets.
+
+tsconfig.json
+  - Signification: TypeScript compiler configuration file
+  - Purpose: Configures TypeScript compilation options (strict mode, module
+    resolution, target ES version) for the Angular project.
+
+application.yml / application-aws.yml
+  - Signification: Spring Boot configuration files
+  - Purpose: Defines database connections, Redis/Kafka settings, JWT config,
+    and logging levels. The -aws profile overrides settings for cloud deployment.
+
+docker-compose.yml
+  - Signification: Docker Compose configuration file
+  - Purpose: Defines the full local development stack with all services,
+    ports, volumes, networks, and environment variables.
+
+nginx.conf / nginx-aws.conf
+  - Signification: Nginx web server configuration files
+  - Purpose: nginx.conf for local (with proxy_pass to backend), nginx-aws.conf
+    for AWS (without proxy_pass, ALB handles routing).
+
+.gitignore
+  - Signification: Git file specifying untracked files to ignore
+  - Purpose: Excludes node_modules, target/, .env, .terraform/, IDE files,
+    and build artifacts from version control.
+
+.env
+  - Signification: Environment variable file
+  - Purpose: Stores sensitive configuration (database passwords, JWT secrets)
+    locally. Never committed to Git.
+
+jq
+  - Signification: Command-line JSON processor
+  - Purpose: Used in deployment scripts to parse and manipulate ECS task
+    definition JSON files during CI/CD pipeline execution.
