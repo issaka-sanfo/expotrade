@@ -2,6 +2,11 @@
 
 A production-grade automated trading platform integrating Interactive Brokers (IBKR) and eToro with real-time monitoring, strategy management, and multi-broker support.
 
+**Live Demo (staging):** http://expotrade-staging-alb-1349821291.eu-west-1.elb.amazonaws.com
+
+- Frontend: http://expotrade-staging-alb-1349821291.eu-west-1.elb.amazonaws.com/
+- Backend Health: http://expotrade-staging-alb-1349821291.eu-west-1.elb.amazonaws.com/actuator/health
+
 ## How the Platform Works
 
 ### Architecture Overview
