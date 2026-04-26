@@ -294,3 +294,133 @@ The architecture is **ready for real broker integration** — it would require:
 3. Mapping broker API responses to domain models (`Order`, `Position`, `MarketData`).
 
 **No changes needed in the application layer** — this is the key benefit of the hexagonal architecture pattern.
+
+---
+
+## CI/CD Pipeline & AWS Deployment
+
+### Cloud Architecture Overview
+
+```
+Internet -> ALB (public subnets, eu-west-1)
+              |-- /api/*, /ws/* -> ECS Backend (private subnets) -> RDS PostgreSQL
+              |-- /*           -> ECS Frontend (private subnets)    ElastiCache Redis
+                                                                    EC2 Kafka (private subnet)
+```
+
+### Infrastructure (Terraform)
+
+All AWS infrastructure is defined as code in `infra/terraform/`:
+
+| File | Purpose |
+|------|---------|
+| `main.tf` | Provider config, S3 backend for state |
+| `variables.tf` | Input variables (region, instance sizes, environment) |
+| `outputs.tf` | ALB DNS, ECR URIs, RDS/Redis/Kafka endpoints |
+| `vpc.tf` | VPC `10.0.0.0/16`, 2 public + 2 private subnets, NAT GW, IGW |
+| `security-groups.tf` | SGs: ALB(80,443), backend(8080), frontend(80), RDS(5432), Redis(6379), Kafka(9092) |
+| `ecr.tf` | 2 ECR repos (backend, frontend), keep last 10 images |
+| `rds.tf` | PostgreSQL 16, db.t3.micro, private subnets only |
+| `elasticache.tf` | Redis 7, cache.t3.micro, private subnets |
+| `kafka.tf` | EC2 t3.micro with Kafka+Zookeeper via Docker Compose, private subnet |
+| `alb.tf` | ALB in public subnets, path-based routing, health checks |
+| `ecs.tf` | Fargate cluster + backend/frontend services and task definitions |
+| `iam.tf` | GitHub OIDC provider, deploy role, ECS task/execution roles |
+| `secrets.tf` | Secrets Manager: db-password, jwt-secret |
+| `monitoring.tf` | CloudWatch Log Groups (30d retention) |
+| `jenkins.tf` | EC2 Jenkins with Docker, Java 21, Maven, Node 20, AWS CLI |
+| `envs/staging.tfvars` | Staging-specific values |
+
+### Key Infrastructure Details
+
+**VPC**: 2 AZs in eu-west-1, public subnets for ALB/NAT, private subnets for ECS/RDS/Redis/Kafka. Single NAT Gateway for staging cost savings.
+
+**ALB Routing**:
+- `/api/*`, `/ws/*`, `/actuator/*` -> backend target group (port 8080, health: `/actuator/health`)
+- `/*` -> frontend target group (port 80, health: `/`)
+- HTTP only for staging (HTTPS with ACM cert for production later)
+- Idle timeout 300s for WebSocket connections
+
+**ECS Fargate**:
+- Backend: 512 CPU, 1024 MB, env vars for DB/Redis/Kafka/JWT from Secrets Manager
+- Frontend: 256 CPU, 512 MB
+- Rolling deployment: min 50%, max 200%
+
+**Kafka EC2**: t3.micro with Amazon Linux 2023, Kafka + Zookeeper via Docker Compose, PLAINTEXT protocol within the VPC (same as local docker-compose, no code changes needed).
+
+### Application Changes for AWS
+
+| File | Change |
+|------|--------|
+| `backend/src/main/resources/application-aws.yml` | Spring profile: `ddl-auto: update`, INFO logging |
+| `frontend/nginx-aws.conf` | Nginx config without `proxy_pass` (ALB handles API/WS routing) |
+| `frontend/Dockerfile` | `NGINX_CONF` build arg to select nginx config |
+| `frontend/angular.json` | `fileReplacements` for production build (relative API URLs) |
+
+### CI/CD Options (3 pipelines available)
+
+| File | Usage |
+|------|-------|
+| `Jenkinsfile` | Jenkins local (Windows, `bat` commands, AWS credentials binding) |
+| `Jenkinsfile.linux` | Jenkins cloud (EC2 Linux, `sh` commands, IAM Instance Role) |
+| `.github/workflows/deploy.yml` | GitHub Actions (OIDC auth, no stored AWS keys) |
+
+### Pipeline Stages
+
+```
+test-backend --┐
+               ├-- build-and-push (ECR) -- deploy (ECS) -- smoke-test
+test-frontend -┘
+```
+
+1. **Test Backend**: `mvn clean verify`
+2. **Test Frontend**: `npm ci && npm run build --configuration production`
+3. **ECR Login**: authenticate to Elastic Container Registry
+4. **Build & Push Images**: Docker build + push with commit SHA and `latest` tags
+5. **Deploy to ECS**: register new task definitions, update services, force new deployment
+6. **Wait for Stability**: `aws ecs wait services-stable`
+7. **Smoke Test**: verify ALB health endpoint returns 200
+
+### AWS Account Bootstrap (one-time)
+
+```bash
+# 1. Create S3 bucket for Terraform state
+aws s3api create-bucket --bucket expotrade-terraform-state \
+  --region eu-west-1 --create-bucket-configuration LocationConstraint=eu-west-1
+
+aws s3api put-bucket-versioning --bucket expotrade-terraform-state \
+  --versioning-configuration Status=Enabled
+
+# 2. Create DynamoDB table for Terraform state locking
+aws dynamodb create-table --table-name expotrade-terraform-lock \
+  --attribute-definitions AttributeName=LockID,AttributeType=S \
+  --key-schema AttributeName=LockID,KeyType=HASH \
+  --billing-mode PAY_PER_REQUEST --region eu-west-1
+
+# 3. Deploy infrastructure
+cd infra/terraform
+terraform init
+terraform plan -var-file=envs/staging.tfvars
+terraform apply -var-file=envs/staging.tfvars
+```
+
+### Deployment Verification
+
+1. `terraform apply` creates all AWS infrastructure
+2. Push to main (or Jenkins Build Now) triggers the pipeline
+3. Access ALB DNS in browser -> Angular app loads
+4. `/actuator/health` returns `{"status":"UP"}`
+5. Check CloudWatch Logs: DB connected, Redis connected, Kafka consumers registered
+
+### Estimated Monthly Cost (staging)
+
+| Service | Cost |
+|---------|------|
+| NAT Gateway | ~$32 |
+| ALB | ~$16 |
+| ECS Fargate (2 tasks) | ~$15 |
+| RDS t3.micro | $0-15 (free tier eligible) |
+| ElastiCache t3.micro | ~$12 |
+| EC2 t3.micro (Kafka) | ~$8 |
+| ECR | < $1 |
+| **Total** | **~$85-100/month** |
