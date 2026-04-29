@@ -52,6 +52,32 @@ pipeline {
             }
         }
 
+        // ─── SonarQube Analysis ─────────────────────────────────────────
+        stage('SonarQube Analysis') {
+            environment {
+                SONAR_SCANNER_HOME = tool 'SonarScanner'
+            }
+            steps {
+                withSonarQubeEnv('SonarQube') {
+                    bat """
+                        "${SONAR_SCANNER_HOME}\\bin\\sonar-scanner.bat" ^
+                        -Dsonar.projectKey=expotrade ^
+                        -Dsonar.projectName=ExpoTrade ^
+                        -Dsonar.java.binaries=backend/target/classes
+                    """
+                }
+            }
+        }
+
+        // ─── SonarQube Quality Gate ─────────────────────────────────────
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
         // ─── Login to ECR ───────────────────────────────────────────────
         stage('ECR Login') {
             steps {

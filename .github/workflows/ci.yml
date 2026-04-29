@@ -42,6 +42,19 @@ jobs:
         working-directory: ./backend
         run: mvn clean verify
 
+      - name: SonarQube Backend Analysis
+        working-directory: ./backend
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        run: |
+          mvn sonar:sonar \
+            -Dsonar.projectKey=expotrade-backend \
+            -Dsonar.host.url=$SONAR_HOST_URL \
+            -Dsonar.token=$SONAR_TOKEN \
+            -Dsonar.java.source=21 \
+            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+
       - name: Build Docker Image
         working-directory: ./backend
         run: docker build -t expotrade-backend .
@@ -72,4 +85,19 @@ jobs:
 
       - name: Test
         working-directory: ./frontend
-        run: npm run test -- --watch=false --browsers=ChromeHeadless
+        run: npm run test -- --watch=false --browsers=ChromeHeadless --code-coverage
+
+      - name: SonarQube Frontend Analysis
+        uses: sonarsource/sonarqube-scan-action@v3
+        with:
+          projectBaseDir: frontend
+          args: >
+            -Dsonar.projectKey=expotrade-frontend
+            -Dsonar.sources=src
+            -Dsonar.tests=src
+            -Dsonar.test.inclusions=**/*.spec.ts
+            -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/*.spec.ts
+            -Dsonar.typescript.lcov.reportPaths=coverage/lcov.info
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
