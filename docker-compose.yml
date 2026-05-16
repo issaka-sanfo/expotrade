@@ -25,6 +25,13 @@ services:
     depends_on:
       - backend
 
+  mobile:
+    build: ./mobile
+    ports:
+      - "8100:80"
+    depends_on:
+      - backend
+
   postgres:
     image: postgres:16-alpine
     ports:
