@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ExpoTrade</string>
+    <string name="title_activity_main">ExpoTrade</string>
+    <string name="package_name">com.expotrade.app</string>
+    <string name="custom_url_scheme">com.expotrade.app</string>
+</resources>
