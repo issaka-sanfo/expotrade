@@ -28,11 +28,12 @@ spring:
       auto-offset-reset: latest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-
-jwt:
-  secret: ${JWT_SECRET:expotrade-default-secret-key-change-in-production-min-256-bits!!}
-  access-token-validity: 3600000
-  refresh-token-validity: 86400000
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8180/realms/expotrade}
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:8180/realms/expotrade/protocol/openid-connect/certs}
 
 broker:
   credential-encryption-key: ${BROKER_CREDENTIAL_KEY:ZXhwb3RyYWRlLWRldi1rZXktMzItYnl0ZXMhIQ==}

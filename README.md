@@ -24,9 +24,9 @@ ExpoTrade follows a **hexagonal (clean) architecture**. The domain logic is fram
 ### Core Flow
 
 **1. Authentication**
-- Users register and login via `/api/v1/auth` endpoints.
-- JWT tokens (1h access, 24h refresh) secure all subsequent requests.
-- Passwords are BCrypt-hashed and sessions are stateless.
+- Users register and login through Keycloak using OIDC authorization code + PKCE.
+- Keycloak-issued JWT access tokens secure API requests.
+- Backend runs statelessly as a Spring OAuth2 resource server.
 
 **2. Trading Strategies (the brain)**
 - Users create strategies (Moving Average Crossover or RSI) with parameters: symbols, broker, stop-loss %, take-profit %, max position size.
@@ -78,6 +78,7 @@ ExpoTrade follows a **hexagonal (clean) architecture**. The domain logic is fram
 | **Docker / Docker Compose** | Containerization and local orchestration |
 | **Prometheus** | Metrics collection from `/actuator/prometheus` |
 | **Grafana** | Real-time monitoring dashboards |
+| **SonarQube** | Static code analysis and quality gate |
 
 ### Key Design Decisions
 
@@ -93,7 +94,7 @@ ExpoTrade follows a **hexagonal (clean) architecture**. The domain logic is fram
 ### Backend
 - **Java 21** + **Spring Boot 3** (Hexagonal/Clean Architecture)
 - **Spring Security** — authentication & authorization
-- **JJWT** — JWT token generation and validation
+- **Spring OAuth2 Resource Server** — Keycloak JWT validation
 - **Spring Data JPA** + **Hibernate** — ORM and database access
 - **Spring Data Redis** — Redis cache integration
 - **Spring Kafka** — event streaming
@@ -115,9 +116,10 @@ ExpoTrade follows a **hexagonal (clean) architecture**. The domain logic is fram
 - **Redis** — market data cache (latest ticks + rolling history)
 - **Apache Kafka** (Confluent) + **Zookeeper** — event streaming
 
-### Monitoring
+### Monitoring & Code Quality
 - **Prometheus** — metrics collection from `/actuator/prometheus`
 - **Grafana** — real-time monitoring dashboards
+- **SonarQube 10 Community** — static code analysis, code smells, coverage tracking (backend via Maven plugin, frontend via sonarqube-scan-action)
 
 ### Infrastructure & DevOps
 - **Docker** + **Docker Compose** — containerization and local orchestration
@@ -202,6 +204,7 @@ Services will be available at:
 - **Swagger UI**: http://localhost:8080/swagger-ui.html
 - **Prometheus**: http://localhost:9090
 - **Grafana**: http://localhost:3000 (admin/admin)
+- **SonarQube**: http://localhost:9000 (admin/admin)
 
 ### Local Development
 
@@ -220,21 +223,19 @@ npm start
 
 ## First Steps After Launch
 
-1. **Register a user:**
+1. **Start the local stack:**
 ```bash
-curl -X POST http://localhost:8080/api/v1/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"username":"trader1","email":"trader1@example.com","password":"password123"}'
+docker compose up --build
 ```
 
-2. **Login to get a JWT token:**
-```bash
-curl -X POST http://localhost:8080/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username":"trader1","password":"password123"}'
-```
+2. **Open the app and sign in with Keycloak:**
+- Frontend: http://localhost:4200/login
+- Mobile web build: http://localhost:8100/login
+- Keycloak admin: http://localhost:8180/admin (`admin` / `admin`)
 
-3. Use the token in subsequent requests (or log in via the frontend at http://localhost:4200/login).
+3. **Use the imported demo user or create a new user in Keycloak:**
+- Demo username: `demo`
+- Demo password: `demo`
 
 4. Create a strategy and place orders from the Trading Panel or Strategy Manager pages.
 
@@ -244,8 +245,8 @@ Full interactive API documentation available via **Swagger UI** at `/swagger-ui.
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/v1/auth/register` | Register new user |
-| POST | `/api/v1/auth/login` | Login (returns JWT) |
+| POST | `/api/v1/auth/register` | Deprecated; registration is handled by Keycloak |
+| POST | `/api/v1/auth/login` | Deprecated; login is handled by Keycloak |
 | GET | `/api/v1/portfolio` | Get portfolio summary |
 | POST | `/api/v1/orders` | Place new order |
 | DELETE | `/api/v1/orders/{id}` | Cancel order |
@@ -272,8 +273,8 @@ Full interactive API documentation available via **Swagger UI** at `/swagger-ui.
 
 ## Security
 
-- **JJWT**-based authentication with access (1h) / refresh (24h) tokens
-- **BCrypt** password hashing (Spring Security)
+- **Keycloak** authentication using OIDC authorization code + PKCE
+- **Spring OAuth2 Resource Server** validates Keycloak JWTs via JWKS
 - Role-based access control
 - API rate limiting (100 req/min per IP) via **Bucket4j**
 - CORS configured for frontend origin
@@ -289,7 +290,8 @@ Key environment variables:
 | `DB_PASSWORD` | expotrade | PostgreSQL password |
 | `REDIS_HOST` | localhost | Redis host |
 | `KAFKA_BOOTSTRAP_SERVERS` | localhost:9092 | Kafka servers |
-| `JWT_SECRET` | (default key) | JWT signing secret |
+| `KEYCLOAK_ISSUER_URI` | http://localhost:8180/realms/expotrade | Expected JWT issuer |
+| `KEYCLOAK_JWK_SET_URI` | http://localhost:8180/realms/expotrade/protocol/openid-connect/certs | Keycloak signing keys endpoint |
 
 ## Testing
 
@@ -398,7 +400,7 @@ All AWS infrastructure is defined as code in `infra/terraform/`:
 | `alb.tf` | ALB in public subnets, path-based routing, health checks |
 | `ecs.tf` | Fargate cluster + backend/frontend services and task definitions |
 | `iam.tf` | GitHub OIDC provider, deploy role, ECS task/execution roles |
-| `secrets.tf` | Secrets Manager: db-password, jwt-secret |
+| `secrets.tf` | Secrets Manager: db-password |
 | `monitoring.tf` | CloudWatch Log Groups (30d retention) |
 | `jenkins.tf` | EC2 Jenkins with Docker, Java 21, Maven, Node 20, AWS CLI |
 | `envs/staging.tfvars` | Staging-specific values |

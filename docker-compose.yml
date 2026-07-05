@@ -9,13 +9,16 @@ services:
       - DB_PASSWORD=expotrade
       - REDIS_HOST=redis
       - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-      - JWT_SECRET=expotrade-production-secret-key-change-this-in-production-256!!
+      - KEYCLOAK_ISSUER_URI=http://localhost:8180/realms/expotrade
+      - KEYCLOAK_JWK_SET_URI=http://keycloak:8080/realms/expotrade/protocol/openid-connect/certs
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_started
       kafka:
+        condition: service_started
+      keycloak:
         condition: service_started
 
   frontend:
@@ -72,6 +75,19 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     depends_on:
       - zookeeper
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0.7
+    command: start-dev --import-realm
+    ports:
+      - "8180:8080"
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HTTP_ENABLED: "true"
+      KC_HOSTNAME_STRICT: "false"
+    volumes:
+      - ./infra/keycloak:/opt/keycloak/data/import:ro
 
   prometheus:
     image: prom/prometheus:latest

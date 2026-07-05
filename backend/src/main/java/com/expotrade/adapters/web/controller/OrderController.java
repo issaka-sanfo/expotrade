@@ -3,11 +3,12 @@ package com.expotrade.adapters.web.controller;
 import com.expotrade.application.dto.OrderRequest;
 import com.expotrade.application.dto.OrderResponse;
 import com.expotrade.application.service.OrderService;
+import com.expotrade.config.AuthenticatedUser;
 import com.expotrade.domain.port.in.PlaceOrderUseCase;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
@@ -25,8 +26,8 @@ public class OrderController {
     @PostMapping
     public Mono<ResponseEntity<OrderResponse>> placeOrder(
             @Valid @RequestBody OrderRequest req,
-            @AuthenticationPrincipal UserDetails user) {
-        UUID userId = UUID.fromString(user.getUsername());
+            @AuthenticationPrincipal Jwt jwt) {
+        UUID userId = AuthenticatedUser.id(jwt);
         var cmd = new PlaceOrderUseCase.PlaceOrderCommand(
                 req.symbol(), req.side(), req.type(), req.quantity(), req.price(),
                 req.stopLoss(), req.takeProfit(), req.brokerType(), req.strategyId(), userId);
@@ -39,8 +40,8 @@ public class OrderController {
     }
 
     @GetMapping
-    public ResponseEntity<List<OrderResponse>> getOrders(@AuthenticationPrincipal UserDetails user) {
-        UUID userId = UUID.fromString(user.getUsername());
+    public ResponseEntity<List<OrderResponse>> getOrders(@AuthenticationPrincipal Jwt jwt) {
+        UUID userId = AuthenticatedUser.id(jwt);
         return ResponseEntity.ok(orderService.getOrdersByUser(userId).stream().map(OrderResponse::from).toList());
     }
 

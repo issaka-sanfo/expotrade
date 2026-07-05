@@ -18,7 +18,7 @@ import { AsyncPipe, NgIf } from '@angular/common';
       <mat-icon>trending_up</mat-icon>
       <span style="margin-left: 8px">ExpoTrade</span>
       <span style="flex: 1"></span>
-      <ng-container *ngIf="auth.isAuthenticated()">
+      <ng-container *ngIf="auth.token$ | async">
         <button mat-button routerLink="/dashboard" routerLinkActive="active">Dashboard</button>
         <button mat-button routerLink="/trading" routerLinkActive="active">Trading</button>
         <button mat-button routerLink="/strategies" routerLinkActive="active">Strategies</button>

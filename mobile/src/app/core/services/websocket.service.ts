@@ -16,11 +16,11 @@ export class WebSocketService {
 
   constructor(private authService: AuthService) {}
 
-  connect(): void {
-    const token = this.authService.token;
+  async connect(): Promise<void> {
+    const token = await this.authService.getToken();
     if (!token) return;
 
-    const url = `${environment.wsUrl}?token=${token}`;
+    const url = `${environment.wsUrl}?token=${encodeURIComponent(token)}`;
     this.socket = new WebSocket(url);
 
     this.socket.onopen = () => {

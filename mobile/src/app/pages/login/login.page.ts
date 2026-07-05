@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import {
   IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardContent,
-  IonItem, IonLabel, IonInput, IonButton, IonText, IonSpinner
+  IonButton, IonText, IonSpinner
 } from '@ionic/angular/standalone';
 import { AuthService } from '../../core/services/auth.service';
 import { WebSocketService } from '../../core/services/websocket.service';
@@ -15,7 +15,7 @@ import { WebSocketService } from '../../core/services/websocket.service';
   imports: [
     CommonModule, FormsModule,
     IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardContent,
-    IonItem, IonLabel, IonInput, IonButton, IonText, IonSpinner
+    IonButton, IonText, IonSpinner
   ],
   template: `
     <ion-content class="ion-padding">
@@ -24,14 +24,6 @@ import { WebSocketService } from '../../core/services/websocket.service';
           <ion-card-title>ExpoTrade</ion-card-title>
         </ion-card-header>
         <ion-card-content>
-          <ion-item>
-            <ion-input label="Username" labelPlacement="floating"
-                       [(ngModel)]="username" type="text"></ion-input>
-          </ion-item>
-          <ion-item>
-            <ion-input label="Password" labelPlacement="floating"
-                       [(ngModel)]="password" type="password"></ion-input>
-          </ion-item>
           @if (error) {
             <ion-text color="danger"><p>{{ error }}</p></ion-text>
           }
@@ -45,8 +37,6 @@ import { WebSocketService } from '../../core/services/websocket.service';
   `
 })
 export class LoginPage {
-  username = '';
-  password = '';
   error = '';
   loading = false;
 
@@ -56,18 +46,14 @@ export class LoginPage {
     private router: Router
   ) {}
 
-  login(): void {
+  async login(): Promise<void> {
     this.loading = true;
     this.error = '';
-    this.authService.login(this.username, this.password).subscribe({
-      next: () => {
-        this.wsService.connect();
-        this.router.navigate(['/tabs']);
-      },
-      error: () => {
-        this.error = 'Invalid username or password';
-        this.loading = false;
-      }
-    });
+    try {
+      await this.authService.login();
+    } catch {
+      this.error = 'Login failed';
+      this.loading = false;
+    }
   }
 }

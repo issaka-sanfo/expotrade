@@ -79,13 +79,6 @@ export interface Position {
   userId: string;
 }
 
-export interface AuthResponse {
-  accessToken: string;
-  refreshToken: string;
-  expiresIn: number;
-  username: string;
-}
-
 export interface WsEnvelope<T = unknown> {
   topic: string;
   eventType: string;

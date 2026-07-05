@@ -71,10 +71,3 @@ export interface Strategy {
   maxDrawdownPercent: number;
   parameters: Record<string, string>;
 }
-
-export interface AuthResponse {
-  accessToken: string;
-  refreshToken: string;
-  expiresIn: number;
-  username: string;
-}
