@@ -12,5 +12,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = 'expotrade'
-include 'backend'
+rootProject.name = "expotrade"
+include("backend")
