@@ -3,10 +3,14 @@ node_modules/
 dist/
 .angular/
 
-# Java / Maven
+# Java / Gradle
 backend/target/
+backend/build/
+build/
+.gradle/
 *.class
 *.jar
+!gradle/wrapper/gradle-wrapper.jar
 
 # IDE
 .idea/

@@ -18,7 +18,6 @@ pipeline {
     tools {
         jdk 'JDK21'
         nodejs 'Node20'
-        maven 'Maven3'
     }
 
     options {
@@ -31,13 +30,11 @@ pipeline {
         // ─── Test Backend ───────────────────────────────────────────────
         stage('Test Backend') {
             steps {
-                dir('backend') {
-                    bat 'mvn clean verify -DskipDocker'
-                }
+                bat '.\\gradlew.bat :backend:clean :backend:check --no-daemon'
             }
             post {
                 always {
-                    junit allowEmptyResults: true, testResults: 'backend/target/surefire-reports/*.xml'
+                    junit allowEmptyResults: true, testResults: 'backend/build/test-results/test/*.xml'
                 }
             }
         }
@@ -63,7 +60,7 @@ pipeline {
                         "${SONAR_SCANNER_HOME}\\bin\\sonar-scanner.bat" ^
                         -Dsonar.projectKey=expotrade ^
                         -Dsonar.projectName=ExpoTrade ^
-                        -Dsonar.java.binaries=backend/target/classes
+                        -Dsonar.java.binaries=backend/build/classes/java/main
                     """
                 }
             }
@@ -100,7 +97,7 @@ pipeline {
                         script {
                             def image = "${env.ECR_REGISTRY}/${BACKEND_ECR_REPO}:${IMAGE_TAG}"
                             def latest = "${env.ECR_REGISTRY}/${BACKEND_ECR_REPO}:latest"
-                            bat "docker build -t ${image} -t ${latest} ./backend"
+                            bat "docker build -f backend/Dockerfile -t ${image} -t ${latest} ."
                             bat "docker push ${image}"
                             bat "docker push ${latest}"
                             env.BACKEND_IMAGE = image

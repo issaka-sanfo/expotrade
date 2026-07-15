@@ -20,7 +20,6 @@ pipeline {
     tools {
         jdk 'JDK21'
         nodejs 'Node20'
-        maven 'Maven3'
     }
 
     options {
@@ -33,13 +32,11 @@ pipeline {
         // ─── Test Backend ───────────────────────────────────────────────
         stage('Test Backend') {
             steps {
-                dir('backend') {
-                    sh 'mvn clean verify -DskipDocker'
-                }
+                sh './gradlew :backend:clean :backend:check --no-daemon'
             }
             post {
                 always {
-                    junit allowEmptyResults: true, testResults: 'backend/target/surefire-reports/*.xml'
+                    junit allowEmptyResults: true, testResults: 'backend/build/test-results/test/*.xml'
                 }
             }
         }
@@ -78,7 +75,7 @@ pipeline {
                         script {
                             def image = "${env.ECR_REGISTRY}/${BACKEND_ECR_REPO}:${IMAGE_TAG}"
                             def latest = "${env.ECR_REGISTRY}/${BACKEND_ECR_REPO}:latest"
-                            sh "docker build -t ${image} -t ${latest} ./backend"
+                            sh "docker build -f backend/Dockerfile -t ${image} -t ${latest} ."
                             sh "docker push ${image}"
                             sh "docker push ${latest}"
                             env.BACKEND_IMAGE = image
