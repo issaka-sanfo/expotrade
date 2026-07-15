@@ -6,8 +6,8 @@
  BACKEND
 ────────────────────────────────────────────────────────────────────────────────
 
-Java 21
-  - Signification: Programming language (Long-Term Support version 21)
+Java 25
+  - Signification: Programming language version 25
   - Purpose: Core language for the backend application, provides virtual threads
     and modern language features.
 

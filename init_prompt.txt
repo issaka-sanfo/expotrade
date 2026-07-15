@@ -22,7 +22,7 @@ Build a scalable, maintainable, and secure system that:
 
 Use:
 
-* Java 21+
+* Java 25+
 * Spring Boot
 * Spring WebFlux (for reactive streams)
 * Spring Security (JWT-based auth)

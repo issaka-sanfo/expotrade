@@ -92,7 +92,7 @@ ExpoTrade follows a **hexagonal (clean) architecture**. The domain logic is fram
 ## Tech Stack
 
 ### Backend
-- **Java 21** + **Spring Boot 3** (Hexagonal/Clean Architecture)
+- **Java 25** + **Spring Boot 3** (Hexagonal/Clean Architecture)
 - **Spring Security** — authentication & authorization
 - **Spring OAuth2 Resource Server** — Keycloak JWT validation
 - **Spring Data JPA** + **Hibernate** — ORM and database access
@@ -102,7 +102,7 @@ ExpoTrade follows a **hexagonal (clean) architecture**. The domain logic is fram
 - **Bucket4j** — API rate limiting
 - **SpringDoc OpenAPI** — Swagger UI and API documentation
 - **Micrometer** — Prometheus metrics export
-- **Maven** — build tool (with Maven Wrapper)
+- **Gradle Kotlin DSL** - build tool (with Gradle Wrapper)
 
 ### Frontend
 - **Angular 17** + **TypeScript**
@@ -119,7 +119,7 @@ ExpoTrade follows a **hexagonal (clean) architecture**. The domain logic is fram
 ### Monitoring & Code Quality
 - **Prometheus** — metrics collection from `/actuator/prometheus`
 - **Grafana** — real-time monitoring dashboards
-- **SonarQube 10 Community** — static code analysis, code smells, coverage tracking (backend via Maven plugin, frontend via sonarqube-scan-action)
+- **SonarQube 10 Community** - static code analysis, code smells, coverage tracking (backend via JaCoCo XML reports, frontend via sonarqube-scan-action)
 
 ### Infrastructure & DevOps
 - **Docker** + **Docker Compose** — containerization and local orchestration
@@ -186,9 +186,9 @@ expotrade/
 ### Prerequisites
 
 - Docker & Docker Compose
-- Java 21+ (for local dev)
+- Java 25+ (for local dev)
 - Node.js 20+ (for local dev)
-- Maven 3.9+ (or use included Maven Wrapper `./mvnw`)
+- Gradle is provided through the included Gradle Wrapper (`./gradlew` / `.\gradlew.bat`)
 - AWS CLI v2 + Terraform 1.5+ (for cloud deployment)
 - Jenkins (for CI/CD pipeline)
 
@@ -210,8 +210,11 @@ Services will be available at:
 
 **Backend:**
 ```bash
-cd backend
-./mvnw spring-boot:run
+# Linux/macOS
+./gradlew :backend:bootRun
+
+# Windows PowerShell
+.\gradlew.bat :backend:bootRun
 ```
 
 **Frontend:**
@@ -297,7 +300,20 @@ Key environment variables:
 
 **Backend** (JUnit 5 + Mockito + TestContainers):
 ```bash
-cd backend && ./mvnw test
+# Linux/macOS
+./gradlew :backend:test
+
+# Windows PowerShell
+.\gradlew.bat :backend:test
+```
+
+**Backend full check and build:**
+```bash
+# Linux/macOS
+./gradlew :backend:clean :backend:check :backend:bootJar
+
+# Windows PowerShell
+.\gradlew.bat :backend:clean :backend:check :backend:bootJar
 ```
 
 **Frontend unit tests** (Karma + Jasmine):
@@ -402,7 +418,7 @@ All AWS infrastructure is defined as code in `infra/terraform/`:
 | `iam.tf` | GitHub OIDC provider, deploy role, ECS task/execution roles |
 | `secrets.tf` | Secrets Manager: db-password |
 | `monitoring.tf` | CloudWatch Log Groups (30d retention) |
-| `jenkins.tf` | EC2 Jenkins with Docker, Java 21, Maven, Node 20, AWS CLI |
+| `jenkins.tf` | EC2 Jenkins with Docker, Java 25, Gradle Wrapper, Node 20, AWS CLI |
 | `envs/staging.tfvars` | Staging-specific values |
 
 ### Key Infrastructure Details
@@ -447,7 +463,7 @@ test-backend --┐
 test-frontend -┘
 ```
 
-1. **Test Backend**: `mvn clean verify`
+1. **Test Backend**: `./gradlew :backend:clean :backend:check --no-daemon` on Linux, `.\gradlew.bat :backend:clean :backend:check --no-daemon` on Windows
 2. **Test Frontend**: `npm ci && npm run build --configuration production`
 3. **ECR Login**: authenticate to Elastic Container Registry
 4. **Build & Push Images**: Docker build + push with commit SHA and `latest` tags

@@ -12,14 +12,8 @@ systemctl start docker
 # ── Install Git ──
 dnf install -y git
 
-# ── Install Java 21 (for Jenkins + Maven) ──
-dnf install -y java-21-amazon-corretto-devel
-
-# ── Install Maven ──
-MVN_VERSION=3.9.9
-curl -fsSL "https://dlcdn.apache.org/maven/maven-3/${MVN_VERSION}/binaries/apache-maven-${MVN_VERSION}-bin.tar.gz" \
-  | tar -xz -C /opt
-ln -s /opt/apache-maven-${MVN_VERSION}/bin/mvn /usr/local/bin/mvn
+# Install Java 25 (for Jenkins + Gradle Wrapper)
+dnf install -y java-25-amazon-corretto-devel
 
 # ── Install Node.js 20 ──
 dnf install -y nodejs20 npm
