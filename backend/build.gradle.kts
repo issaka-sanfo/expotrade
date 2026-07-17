@@ -4,7 +4,7 @@ plugins {
     jacoco
 }
 
-group = "com.expotrade"
+group = "com.isanf.expotrade"
 version = "1.0.0-SNAPSHOT"
 description = "Automated Trading Bot Platform"
 

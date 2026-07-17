@@ -58,5 +58,5 @@ management:
 
 logging:
   level:
-    com.expotrade: DEBUG
+    com.isanf.expotrade: DEBUG
     org.springframework.security: INFO

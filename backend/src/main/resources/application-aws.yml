@@ -5,5 +5,5 @@ spring:
 
 logging:
   level:
-    com.expotrade: INFO
+    com.isanf.expotrade: INFO
     org.springframework.security: WARN
