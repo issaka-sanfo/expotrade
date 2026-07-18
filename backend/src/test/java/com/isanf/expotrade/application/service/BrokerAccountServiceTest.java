@@ -10,6 +10,7 @@ import com.isanf.expotrade.infrastructure.security.CredentialEncryptor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -59,6 +60,42 @@ class BrokerAccountServiceTest {
         BrokerAccount verified = service.verifyAccount(account.id(), userId);
 
         assertEquals(BrokerAccountStatus.ACTIVE, verified.status());
+    }
+
+    @Test
+    void verifyAccountMarksAccountVerificationFailedWhenCredentialsAreMissing() {
+        UUID userId = UUID.randomUUID();
+        BrokerAccount account = new BrokerAccount(
+                UUID.randomUUID(), userId, BrokerType.IBKR, "acct-1",
+                null, null, null,
+                BrokerAccountStatus.PENDING_VERIFICATION,
+                Instant.now(), Instant.now());
+        when(repository.findById(account.id())).thenReturn(Optional.of(account));
+        when(repository.save(any(BrokerAccount.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        BrokerAccount verified = service.verifyAccount(account.id(), userId);
+
+        assertEquals(BrokerAccountStatus.VERIFICATION_FAILED, verified.status());
+        verify(repository).save(argThat(saved ->
+                saved.id().equals(account.id())
+                        && saved.userId().equals(userId)
+                        && saved.status() == BrokerAccountStatus.VERIFICATION_FAILED));
+    }
+
+    @Test
+    void unlinkAccountMarksAccountInactiveInsteadOfDeletingIt() {
+        UUID userId = UUID.randomUUID();
+        BrokerAccount account = account(userId, BrokerAccountStatus.ACTIVE);
+        when(repository.findById(account.id())).thenReturn(Optional.of(account));
+        when(repository.save(any(BrokerAccount.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        service.unlinkAccount(account.id(), userId);
+
+        verify(repository).save(argThat(saved ->
+                saved.id().equals(account.id())
+                        && saved.userId().equals(userId)
+                        && saved.status() == BrokerAccountStatus.INACTIVE));
+        verify(repository, never()).deleteById(account.id());
     }
 
     @Test
