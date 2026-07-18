@@ -61,6 +61,16 @@ class EtoroBrokerServiceTest {
     }
 
     @Test
+    void givenExternalOrderIdWhenCancellingOrderThenReturnsCancelledEtoroPaperOrder() {
+        Order cancelled = brokerService.cancelOrder("ETORO-1").block(Duration.ofSeconds(1));
+
+        assertThat(cancelled).isNotNull();
+        assertThat(cancelled.status()).isEqualTo(OrderStatus.CANCELLED);
+        assertThat(cancelled.externalOrderId()).isEqualTo("ETORO-1");
+        assertThat(cancelled.brokerType()).isEqualTo(BrokerType.ETORO);
+    }
+
+    @Test
     void givenEtoroPaperAdapterWhenGettingPositionsThenReturnsSimulatedEtoroPositions() {
         List<Position> positions = brokerService.getPositions().block(Duration.ofSeconds(1));
 

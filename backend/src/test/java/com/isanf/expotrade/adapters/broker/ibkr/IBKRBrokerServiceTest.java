@@ -61,6 +61,16 @@ class IBKRBrokerServiceTest {
     }
 
     @Test
+    void givenExternalOrderIdWhenCancellingOrderThenReturnsCancelledIbkrPaperOrder() {
+        Order cancelled = brokerService.cancelOrder("IBKR-1").block(Duration.ofSeconds(1));
+
+        assertThat(cancelled).isNotNull();
+        assertThat(cancelled.status()).isEqualTo(OrderStatus.CANCELLED);
+        assertThat(cancelled.externalOrderId()).isEqualTo("IBKR-1");
+        assertThat(cancelled.brokerType()).isEqualTo(BrokerType.IBKR);
+    }
+
+    @Test
     void givenIbkrPaperAdapterWhenGettingPositionsThenReturnsSimulatedIbkrPositions() {
         List<Position> positions = brokerService.getPositions().block(Duration.ofSeconds(1));
 

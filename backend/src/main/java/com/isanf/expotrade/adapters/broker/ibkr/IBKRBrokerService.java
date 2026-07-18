@@ -5,7 +5,9 @@ import com.isanf.expotrade.domain.model.Order;
 import com.isanf.expotrade.domain.model.Position;
 import com.isanf.expotrade.domain.model.BrokerCredentials;
 import com.isanf.expotrade.domain.model.enums.BrokerType;
+import com.isanf.expotrade.domain.model.enums.OrderSide;
 import com.isanf.expotrade.domain.model.enums.OrderStatus;
+import com.isanf.expotrade.domain.model.enums.OrderType;
 import com.isanf.expotrade.domain.port.out.BrokerPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +46,7 @@ public class IBKRBrokerService implements BrokerPort {
     public Mono<Order> cancelOrder(String externalOrderId) {
         return Mono.fromCallable(() -> {
             log.info("[IBKR] Cancelling order: {}", externalOrderId);
-            return (Order) null;
+            return cancelledPaperOrder(externalOrderId);
         }).delayElement(Duration.ofMillis(50));
     }
 
@@ -105,5 +107,13 @@ public class IBKRBrokerService implements BrokerPort {
 
     private boolean hasText(String value) {
         return value != null && !value.isBlank();
+    }
+
+    private Order cancelledPaperOrder(String externalOrderId) {
+        Instant now = Instant.now();
+        return new Order(UUID.randomUUID(), "PAPER", OrderSide.BUY, OrderType.MARKET,
+                BigDecimal.ZERO, BigDecimal.ZERO, null, null, null,
+                OrderStatus.CANCELLED, BrokerType.IBKR, externalOrderId,
+                "paper-trading", UUID.randomUUID(), now, now);
     }
 }
