@@ -3,6 +3,7 @@ package com.isanf.expotrade.adapters.broker.ibkr;
 import com.isanf.expotrade.domain.model.MarketData;
 import com.isanf.expotrade.domain.model.Order;
 import com.isanf.expotrade.domain.model.Position;
+import com.isanf.expotrade.domain.model.BrokerCredentials;
 import com.isanf.expotrade.domain.model.enums.BrokerType;
 import com.isanf.expotrade.domain.model.enums.OrderStatus;
 import com.isanf.expotrade.domain.port.out.BrokerPort;
@@ -89,5 +90,20 @@ public class IBKRBrokerService implements BrokerPort {
     public Mono<Order> getOrderStatus(String externalOrderId) {
         log.info("[IBKR] Getting order status: {}", externalOrderId);
         return Mono.empty();
+    }
+
+    @Override
+    public Mono<Boolean> verifyCredentials(BrokerCredentials credentials) {
+        return Mono.fromCallable(() -> {
+            log.info("[IBKR] Verifying broker credentials for account {}", credentials.accountId());
+            return hasText(credentials.accountId())
+                    && hasText(credentials.apiKey())
+                    && hasText(credentials.apiSecret())
+                    && hasText(credentials.accessToken());
+        }).delayElement(Duration.ofMillis(50));
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.isBlank();
     }
 }
