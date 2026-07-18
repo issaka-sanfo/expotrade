@@ -70,9 +70,9 @@ class BrokerAccountRepositoryAdapterTest {
     }
 
     @Test
-    void findsByUserIdAndBrokerTypeUsingEnumName() {
+    void findsByUserIdAndBrokerTypeUsingEnumValue() {
         BrokerAccount account = brokerAccount();
-        when(jpaRepository.findByUserIdAndBrokerType(account.userId(), BrokerType.IBKR.name()))
+        when(jpaRepository.findByUserIdAndBrokerType(account.userId(), BrokerType.IBKR))
                 .thenReturn(Optional.of(BrokerAccountEntity.fromDomain(account)));
 
         Optional<BrokerAccount> found = adapter.findByUserIdAndBrokerType(account.userId(), BrokerType.IBKR);
@@ -81,10 +81,10 @@ class BrokerAccountRepositoryAdapterTest {
     }
 
     @Test
-    void findsByUserIdBrokerTypeAndStatusUsingEnumNames() {
+    void findsByUserIdBrokerTypeAndStatusUsingEnumValues() {
         BrokerAccount account = brokerAccount();
         when(jpaRepository.findByUserIdAndBrokerTypeAndStatus(
-                account.userId(), BrokerType.IBKR.name(), BrokerAccountStatus.ACTIVE.name()))
+                account.userId(), BrokerType.IBKR, BrokerAccountStatus.ACTIVE))
                 .thenReturn(Optional.of(BrokerAccountEntity.fromDomain(account)));
 
         Optional<BrokerAccount> found = adapter.findByUserIdAndBrokerTypeAndStatus(

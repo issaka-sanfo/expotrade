@@ -38,12 +38,12 @@ public class BrokerAccountRepositoryAdapter implements BrokerAccountRepository {
 
     @Override
     public Optional<BrokerAccount> findByUserIdAndBrokerType(UUID userId, BrokerType brokerType) {
-        return jpaRepo.findByUserIdAndBrokerType(userId, brokerType.name()).map(BrokerAccountEntity::toDomain);
+        return jpaRepo.findByUserIdAndBrokerType(userId, brokerType).map(BrokerAccountEntity::toDomain);
     }
 
     @Override
     public Optional<BrokerAccount> findByUserIdAndBrokerTypeAndStatus(UUID userId, BrokerType brokerType, BrokerAccountStatus status) {
-        return jpaRepo.findByUserIdAndBrokerTypeAndStatus(userId, brokerType.name(), status.name()).map(BrokerAccountEntity::toDomain);
+        return jpaRepo.findByUserIdAndBrokerTypeAndStatus(userId, brokerType, status).map(BrokerAccountEntity::toDomain);
     }
 
     @Override

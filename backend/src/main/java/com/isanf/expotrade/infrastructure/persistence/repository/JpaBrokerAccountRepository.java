@@ -1,5 +1,7 @@
 package com.isanf.expotrade.infrastructure.persistence.repository;
 
+import com.isanf.expotrade.domain.model.enums.BrokerAccountStatus;
+import com.isanf.expotrade.domain.model.enums.BrokerType;
 import com.isanf.expotrade.infrastructure.persistence.entity.BrokerAccountEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -9,6 +11,7 @@ import java.util.UUID;
 
 public interface JpaBrokerAccountRepository extends JpaRepository<BrokerAccountEntity, UUID> {
     List<BrokerAccountEntity> findByUserId(UUID userId);
-    Optional<BrokerAccountEntity> findByUserIdAndBrokerType(UUID userId, String brokerType);
-    Optional<BrokerAccountEntity> findByUserIdAndBrokerTypeAndStatus(UUID userId, String brokerType, String status);
+    Optional<BrokerAccountEntity> findByUserIdAndBrokerType(UUID userId, BrokerType brokerType);
+    Optional<BrokerAccountEntity> findByUserIdAndBrokerTypeAndStatus(
+            UUID userId, BrokerType brokerType, BrokerAccountStatus status);
 }
