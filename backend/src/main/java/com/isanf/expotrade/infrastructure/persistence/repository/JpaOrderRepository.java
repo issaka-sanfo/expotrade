@@ -11,5 +11,6 @@ public interface JpaOrderRepository extends JpaRepository<OrderEntity, UUID> {
     List<OrderEntity> findByUserId(UUID userId);
     List<OrderEntity> findByStatus(String status);
     List<OrderEntity> findByStrategyId(String strategyId);
+    List<OrderEntity> findByUserIdAndStrategyId(UUID userId, String strategyId);
     Optional<OrderEntity> findByExternalOrderId(String externalOrderId);
 }

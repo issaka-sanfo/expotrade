@@ -106,11 +106,24 @@ class OrderServiceTest {
         when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(broker.cancelOrder("ext-1")).thenReturn(Mono.just(order));
 
-        Order cancelled = service.cancelOrder(order.id()).block();
+        Order cancelled = service.cancelOrder(order.id(), order.userId()).block();
 
         assertNotNull(cancelled);
         assertEquals(OrderStatus.CANCELLED, cancelled.status());
         verify(eventPublisher).publishOrderEvent("ORDER_CANCELLED", cancelled);
+    }
+
+    @Test
+    void cancelOrderRejectsOrderOwnedByAnotherUser() {
+        Order order = sampleOrder().withExternalOrderId("ext-1").withStatus(OrderStatus.SUBMITTED);
+        when(orderRepository.findById(order.id())).thenReturn(Optional.of(order));
+
+        SecurityException error = assertThrows(SecurityException.class,
+                () -> service.cancelOrder(order.id(), UUID.randomUUID()).block());
+
+        assertEquals("Order does not belong to current user", error.getMessage());
+        verify(broker, never()).cancelOrder(anyString());
+        verify(orderRepository, never()).save(any(Order.class));
     }
 
     @Test
@@ -120,6 +133,15 @@ class OrderServiceTest {
         when(orderRepository.findByUserId(userId)).thenReturn(orders);
 
         assertSame(orders, service.getOrdersByUser(userId));
+    }
+
+    @Test
+    void getOrdersByUserAndStrategyReturnsRepositoryResults() {
+        UUID userId = UUID.randomUUID();
+        List<Order> orders = List.of(sampleOrder());
+        when(orderRepository.findByUserIdAndStrategyId(userId, "strategy-1")).thenReturn(orders);
+
+        assertSame(orders, service.getOrdersByUserAndStrategy(userId, "strategy-1"));
     }
 
     private PlaceOrderCommand command() {

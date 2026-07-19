@@ -13,5 +13,6 @@ public interface OrderRepository {
     List<Order> findByUserId(UUID userId);
     List<Order> findByStatus(OrderStatus status);
     List<Order> findByStrategyId(String strategyId);
+    List<Order> findByUserIdAndStrategyId(UUID userId, String strategyId);
     Optional<Order> findByExternalOrderId(String externalOrderId);
 }

@@ -6,5 +6,5 @@ import reactor.core.publisher.Mono;
 import java.util.UUID;
 
 public interface CancelOrderUseCase {
-    Mono<Order> cancelOrder(UUID orderId);
+    Mono<Order> cancelOrder(UUID orderId, UUID userId);
 }

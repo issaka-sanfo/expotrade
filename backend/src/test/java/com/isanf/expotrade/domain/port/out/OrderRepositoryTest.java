@@ -19,6 +19,7 @@ class OrderRepositoryTest {
         assertThat(OrderRepository.class.getDeclaredMethod("findByUserId", UUID.class).getReturnType()).isEqualTo(List.class);
         assertThat(OrderRepository.class.getDeclaredMethod("findByStatus", OrderStatus.class).getReturnType()).isEqualTo(List.class);
         assertThat(OrderRepository.class.getDeclaredMethod("findByStrategyId", String.class).getReturnType()).isEqualTo(List.class);
+        assertThat(OrderRepository.class.getDeclaredMethod("findByUserIdAndStrategyId", UUID.class, String.class).getReturnType()).isEqualTo(List.class);
         assertThat(OrderRepository.class.getDeclaredMethod("findByExternalOrderId", String.class).getReturnType()).isEqualTo(Optional.class);
     }
 }

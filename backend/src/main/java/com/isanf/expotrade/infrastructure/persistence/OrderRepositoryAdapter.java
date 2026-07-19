@@ -31,6 +31,9 @@ public class OrderRepositoryAdapter implements OrderRepository {
     @Override public List<Order> findByStrategyId(String strategyId) {
         return jpaRepo.findByStrategyId(strategyId).stream().map(OrderEntity::toDomain).toList();
     }
+    @Override public List<Order> findByUserIdAndStrategyId(UUID userId, String strategyId) {
+        return jpaRepo.findByUserIdAndStrategyId(userId, strategyId).stream().map(OrderEntity::toDomain).toList();
+    }
     @Override public Optional<Order> findByExternalOrderId(String externalOrderId) {
         return jpaRepo.findByExternalOrderId(externalOrderId).map(OrderEntity::toDomain);
     }

@@ -12,7 +12,7 @@ class CancelOrderUseCaseTest {
 
     @Test
     void exposesOrderCancellationByIdentifier() throws NoSuchMethodException {
-        Method cancelOrder = CancelOrderUseCase.class.getDeclaredMethod("cancelOrder", UUID.class);
+        Method cancelOrder = CancelOrderUseCase.class.getDeclaredMethod("cancelOrder", UUID.class, UUID.class);
 
         assertThat(cancelOrder.getReturnType()).isEqualTo(Mono.class);
     }

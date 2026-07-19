@@ -96,10 +96,13 @@ public class OrderService implements PlaceOrderUseCase, CancelOrderUseCase {
     }
 
     @Override
-    public Mono<Order> cancelOrder(UUID orderId) {
+    public Mono<Order> cancelOrder(UUID orderId, UUID userId) {
         return Mono.justOrEmpty(orderRepository.findById(orderId))
                 .switchIfEmpty(Mono.error(new IllegalArgumentException("Order not found: " + orderId)))
                 .flatMap(order -> {
+                    if (!order.userId().equals(userId)) {
+                        return Mono.error(new SecurityException("Order does not belong to current user"));
+                    }
                     BrokerPort broker = brokerPorts.get(order.brokerType().name());
                     if (broker == null) {
                         return Mono.error(new IllegalArgumentException("Unsupported broker"));
@@ -120,5 +123,9 @@ public class OrderService implements PlaceOrderUseCase, CancelOrderUseCase {
 
     public List<Order> getOrdersByStrategy(String strategyId) {
         return orderRepository.findByStrategyId(strategyId);
+    }
+
+    public List<Order> getOrdersByUserAndStrategy(UUID userId, String strategyId) {
+        return orderRepository.findByUserIdAndStrategyId(userId, strategyId);
     }
 }
