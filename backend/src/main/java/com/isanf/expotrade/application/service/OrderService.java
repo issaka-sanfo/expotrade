@@ -1,12 +1,15 @@
 package com.isanf.expotrade.application.service;
 
 import com.isanf.expotrade.domain.model.Order;
+import com.isanf.expotrade.domain.model.Portfolio;
+import com.isanf.expotrade.domain.model.StrategyConfig;
 import com.isanf.expotrade.domain.model.enums.OrderStatus;
 import com.isanf.expotrade.domain.port.in.CancelOrderUseCase;
 import com.isanf.expotrade.domain.port.in.PlaceOrderUseCase;
 import com.isanf.expotrade.domain.port.out.BrokerPort;
 import com.isanf.expotrade.domain.port.out.EventPublisher;
 import com.isanf.expotrade.domain.port.out.OrderRepository;
+import com.isanf.expotrade.domain.service.RiskDecision;
 import com.isanf.expotrade.domain.service.RiskManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,15 +29,21 @@ public class OrderService implements PlaceOrderUseCase, CancelOrderUseCase {
     private final OrderRepository orderRepository;
     private final EventPublisher eventPublisher;
     private final RiskManager riskManager;
+    private final StrategyService strategyService;
+    private final PortfolioService portfolioService;
 
     public OrderService(Map<String, BrokerPort> brokerPorts,
                         OrderRepository orderRepository,
                         EventPublisher eventPublisher,
-                        RiskManager riskManager) {
+                        RiskManager riskManager,
+                        StrategyService strategyService,
+                        PortfolioService portfolioService) {
         this.brokerPorts = brokerPorts;
         this.orderRepository = orderRepository;
         this.eventPublisher = eventPublisher;
         this.riskManager = riskManager;
+        this.strategyService = strategyService;
+        this.portfolioService = portfolioService;
     }
 
     @Override
@@ -46,13 +55,29 @@ public class OrderService implements PlaceOrderUseCase, CancelOrderUseCase {
                 command.brokerType(), command.strategyId(), command.userId()
         );
 
-        Order savedOrder = orderRepository.save(order);
-        log.info("Order created: {} for {} {}", savedOrder.id(), savedOrder.symbol(), savedOrder.side());
+        return portfolioService.getPortfolio(command.userId())
+                .flatMap(portfolio -> placeOrderAfterRiskCheck(command, order, portfolio));
+    }
+
+    private Mono<Order> placeOrderAfterRiskCheck(PlaceOrderCommand command, Order order, Portfolio portfolio) {
+        StrategyConfig strategyConfig = strategyService.getStrategy(command.strategyId());
+        RiskDecision decision = riskManager.evaluate(order, portfolio, strategyConfig);
+
+        if (!decision.accepted()) {
+            Order rejected = order.withStatus(OrderStatus.REJECTED);
+            orderRepository.save(rejected);
+            eventPublisher.publishOrderEvent("ORDER_REJECTED", rejected);
+            log.warn("Order rejected by pre-trade risk controls: {}", decision.rejectionReason());
+            return Mono.error(new PreTradeRiskRejectedException(decision.rejectionReason()));
+        }
 
         BrokerPort broker = brokerPorts.get(command.brokerType().name());
         if (broker == null) {
             return Mono.error(new IllegalArgumentException("Unsupported broker: " + command.brokerType()));
         }
+
+        Order savedOrder = orderRepository.save(order);
+        log.info("Order created: {} for {} {}", savedOrder.id(), savedOrder.symbol(), savedOrder.side());
 
         return broker.placeOrder(savedOrder)
                 .map(executedOrder -> {

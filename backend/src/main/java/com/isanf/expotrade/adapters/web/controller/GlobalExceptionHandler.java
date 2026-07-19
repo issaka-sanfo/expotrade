@@ -1,5 +1,6 @@
 package com.isanf.expotrade.adapters.web.controller;
 
+import com.isanf.expotrade.application.service.PreTradeRiskRejectedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -23,6 +24,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(SecurityException.class)
     public ResponseEntity<Map<String, Object>> handleSecurity(SecurityException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBody(ex.getMessage(), HttpStatus.FORBIDDEN));
+    }
+
+    @ExceptionHandler(PreTradeRiskRejectedException.class)
+    public ResponseEntity<Map<String, Object>> handlePreTradeRiskRejected(PreTradeRiskRejectedException ex) {
+        return ResponseEntity.badRequest().body(Map.of(
+                "error", ex.getMessage(),
+                "code", ex.code(),
+                "status", HttpStatus.BAD_REQUEST.value(),
+                "timestamp", Instant.now().toString()
+        ));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
