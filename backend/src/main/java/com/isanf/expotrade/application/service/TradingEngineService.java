@@ -40,6 +40,14 @@ public class TradingEngineService {
     @Scheduled(fixedDelayString = "${trading.engine.interval:5000}")
     public void executeStrategies() {
         log.debug("Trading engine tick - evaluating active strategies");
+
+        for (StrategyConfig config : strategyService.getActiveStrategies()) {
+            try {
+                evaluateStrategy(config);
+            } catch (Exception e) {
+                log.error("Error evaluating strategy {}: {}", config.id(), e.getMessage(), e);
+            }
+        }
     }
 
     public void evaluateStrategy(StrategyConfig config) {

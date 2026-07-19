@@ -70,6 +70,12 @@ public class StrategyService implements ManageStrategyUseCase {
         return strategies.get(strategyId);
     }
 
+    public List<StrategyConfig> getActiveStrategies() {
+        return strategies.values().stream()
+                .filter(strategy -> strategy.status() == StrategyStatus.ACTIVE)
+                .toList();
+    }
+
     private StrategyConfig getAndValidate(String strategyId, UUID userId) {
         StrategyConfig config = strategies.get(strategyId);
         if (config == null) throw new IllegalArgumentException("Strategy not found: " + strategyId);

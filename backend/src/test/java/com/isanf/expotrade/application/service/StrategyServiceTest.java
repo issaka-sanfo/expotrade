@@ -56,6 +56,20 @@ class StrategyServiceTest {
         assertThrows(SecurityException.class, () -> service.enableStrategy(created.id(), UUID.randomUUID()));
     }
 
+    @Test
+    void getActiveStrategiesReturnsOnlyEnabledStrategies() {
+        UUID userId = UUID.randomUUID();
+        StrategyConfig first = service.createStrategy(config(userId));
+        StrategyConfig second = service.createStrategy(config(userId));
+        service.enableStrategy(first.id(), userId);
+
+        List<StrategyConfig> activeStrategies = service.getActiveStrategies();
+
+        assertEquals(1, activeStrategies.size());
+        assertEquals(first.id(), activeStrategies.getFirst().id());
+        assertFalse(activeStrategies.stream().anyMatch(strategy -> strategy.id().equals(second.id())));
+    }
+
     private StrategyConfig config(UUID userId) {
         return new StrategyConfig("ignored", "RSI", "RSI", List.of("AAPL"),
                 BrokerType.IBKR, StrategyStatus.ACTIVE, BigDecimal.valueOf(1000),
