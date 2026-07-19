@@ -51,6 +51,28 @@ class MovingAverageStrategyTest {
         assertEquals("AAPL", signal.symbol());
     }
 
+    @Test
+    void givenGoldenCrossWhenGeneratingSignalThenReturnsBuy() {
+        StrategyConfig config = createConfig(Map.of("shortPeriod", "2", "longPeriod", "3"));
+        List<MarketData> data = prices(120, 100, 100, 110);
+
+        Signal signal = strategy.generateSignal("AAPL", data, config);
+
+        assertEquals(SignalType.BUY, signal.type());
+        assertEquals("Golden cross detected", signal.reason());
+    }
+
+    @Test
+    void givenDeathCrossWhenGeneratingSignalThenReturnsSell() {
+        StrategyConfig config = createConfig(Map.of("shortPeriod", "2", "longPeriod", "3"));
+        List<MarketData> data = prices(80, 100, 100, 90);
+
+        Signal signal = strategy.generateSignal("AAPL", data, config);
+
+        assertEquals(SignalType.SELL, signal.type());
+        assertEquals("Death cross detected", signal.reason());
+    }
+
     private StrategyConfig createConfig(Map<String, String> params) {
         return new StrategyConfig("s1", "MA Test", "MOVING_AVERAGE", List.of("AAPL"),
                 BrokerType.IBKR, StrategyStatus.ACTIVE, BigDecimal.valueOf(10000),
@@ -65,6 +87,16 @@ class MovingAverageStrategyTest {
             data.add(new MarketData("AAPL", price, price, price,
                     BigDecimal.valueOf(1000000), price, price, price, price,
                     Instant.now().minusSeconds(i * 60L)));
+        }
+        return data;
+    }
+
+    private List<MarketData> prices(int... values) {
+        List<MarketData> data = new ArrayList<>();
+        for (int value : values) {
+            BigDecimal price = BigDecimal.valueOf(value);
+            data.add(new MarketData("AAPL", price, price, price, BigDecimal.TEN,
+                    price, price, price, price, Instant.now()));
         }
         return data;
     }
